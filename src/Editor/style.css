@@ -1,0 +1,37 @@
+.CodeMirror {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  font-family: Fira Code, Menlo, Monaco, 'Courier New', monospace;
+  font-size: 13px;
+}
+
+.compile-error {
+  background: red;
+  color: white;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+canvas {
+  transition: 100ms;
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 100;
+  transform-origin: top right;
+  transform: scale3d(0.5, 0.5, 1.0);
+}
+
+canvas:hover {
+  transform: scale3d(1.0, 1.0, 1.0);
+}
