@@ -89,11 +89,16 @@ v.on('error', (event: ViewEvent) => {
   setWidgets(parsedLogs);
 });
 
+v.createTexture('u_image');
 v.load(frag);
 
 const ii = new Image();
 ii.onload = () => {
-  v.texture(0, 'u_image', ii);
+  v.updateTexture('u_image', {
+    source: ii,
+    flipY: true,
+  });
+
   const ratio = 1; // devicePixelRatio;
   v.resize(ii.width * ratio, ii.height * ratio);
   canvas.style.width = `${Math.floor(canvas.width / ratio)}px`;

@@ -1,16 +1,19 @@
 import { EventEmitter } from 'events';
 import * as defaultShaders from './defaultShaders';
-import { ViewEvent } from './models';
+import { ViewEvent, Uniform, TextureUpdate } from './models';
 import { Program } from './Program';
+import { Texture } from './Texture';
 
 export class View extends EventEmitter {
   private program: Program;
+  private textures: Map<string, Texture>;
 
   constructor(
     private gl: WebGL2RenderingContext,
   ) {
     super();
 
+    this.textures = new Map();
     this.load(defaultShaders.getFragmentShaderSource());
   }
 
@@ -18,7 +21,26 @@ export class View extends EventEmitter {
     this.emit(level, event);
   }
 
-  public render() {
+  public render(uniforms: Uniform[] = []) {
+    const textureUniforms: Uniform[] = [...this.textures].reduce<Uniform[]>(
+      (uniforms, [name, texture]) => {
+        return [
+          ...uniforms,
+          {
+            name,
+            method: '1i',
+            value: [texture.getUnit()],
+          },
+          {
+            name: `${name}_resolution`,
+            method: '2f',
+            value: texture.getSize(),
+          },
+        ];
+      },
+      [],
+    );
+
     this.program.render(
       this.gl.drawingBufferWidth,
       this.gl.drawingBufferHeight,
@@ -33,26 +55,43 @@ export class View extends EventEmitter {
           method: '2f',
           value: [this.gl.drawingBufferWidth, this.gl.drawingBufferHeight],
         },
+        ...textureUniforms,
+        ...uniforms,
       ],
     );
   }
 
-  public texture(unit: number, name: string, source: ImageBitmap | ImageData | HTMLImageElement | HTMLCanvasElement | HTMLVideoElement) {
+  public createTexture(name: string) {
     const gl = this.gl;
 
-    const texture = gl.createTexture();
-    gl.activeTexture(gl.TEXTURE0 + unit);
-    gl.bindTexture(gl.TEXTURE_2D, texture);
+    const texture = new Texture(gl);
 
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
+    this.textures.set(name, texture);
+  }
 
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, source.width, source.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, source);
+  public updateTexture(
+    name: string,
+    textureUpdate: Partial<TextureUpdate>,
+  ) {
+    const texture = this.textures.get(name);
 
-    // TODO: REFACTOR THIS!!!
-    this.program['uniform']('1i', name, unit);
-    this.program['uniform']('2f', `${name}_resolution`, source.width, source.height);
+    if ('source' in textureUpdate) {
+      texture.setSource(
+        textureUpdate.source,
+        textureUpdate.source.width,
+        textureUpdate.source.height,
+        textureUpdate.flipY,
+        textureUpdate.filter,
+        textureUpdate.wrap,
+      );
+    } else {
+      if ('filter' in textureUpdate) {
+        texture.setFilter(textureUpdate.filter);
+      }
+      if ('wrap' in textureUpdate) {
+        texture.setWrap(textureUpdate.wrap);
+      }
+    }
   }
 
   public load(fragmentSource: string) {
