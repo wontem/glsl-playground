@@ -34,8 +34,7 @@ export enum Wrap {
 
 export interface TextureUpdate {
   source: ImageBitmap | ImageData | HTMLImageElement | HTMLCanvasElement | HTMLVideoElement;
-  width: number;
-  height: number;
+  size: [number, number];
   flipY: boolean;
   filter: Filter;
   wrap: [Wrap, Wrap];

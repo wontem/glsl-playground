@@ -3,10 +3,17 @@ import * as defaultShaders from './defaultShaders';
 import { ViewEvent, Uniform, TextureUpdate } from './models';
 import { Program } from './Program';
 import { Texture } from './Texture';
+import { DoubleFramebuffer } from './Framebuffer';
+
+// interface ProgramConfigs {
+//   program: Program;
+//   output: DoubleFramebuffer;
+// }
 
 export class View extends EventEmitter {
   private program: Program;
-  private textures: Map<string, Texture>;
+  private textures: Map<number, Texture>;
+  private framebuffers: Map<number, DoubleFramebuffer>;
 
   constructor(
     private gl: WebGL2RenderingContext,
@@ -21,15 +28,20 @@ export class View extends EventEmitter {
     this.emit(level, event);
   }
 
-  public render(uniforms: Uniform[] = []) {
-    const textureUniforms: Uniform[] = [...this.textures].reduce<Uniform[]>(
-      (uniforms, [name, texture]) => {
+  public render(
+    uniforms: Uniform[] = [],
+    textures: [string, number][] = [],
+  ) {
+    const textureUniforms: Uniform[] = textures.reduce<Uniform[]>(
+      (uniforms, [name, unit]) => {
+        const texture = this.textures.get(unit);
+
         return [
           ...uniforms,
           {
             name,
             method: '1i',
-            value: [texture.getUnit()],
+            value: [unit],
           },
           {
             name: `${name}_resolution`,
@@ -45,41 +57,38 @@ export class View extends EventEmitter {
       this.gl.drawingBufferWidth,
       this.gl.drawingBufferHeight,
       [
-        {
-          name: 'u_time',
-          method: '1f',
-          value: [performance.now() / 1000],
-        },
-        {
-          name: 'u_resolution',
-          method: '2f',
-          value: [this.gl.drawingBufferWidth, this.gl.drawingBufferHeight],
-        },
         ...textureUniforms,
         ...uniforms,
       ],
     );
   }
 
-  public createTexture(name: string) {
-    const gl = this.gl;
+  public createTexture(): number {
+    const texture = new Texture(this.gl);
+    const unit = texture.getUnit();
+    this.textures.set(unit, texture);
 
-    const texture = new Texture(gl);
+    return unit;
+  }
 
-    this.textures.set(name, texture);
+  public createFramebuffer(fragmentSource: string) {
+    const fb = new DoubleFramebuffer(this.gl);
+    const unit = fb.getUnit();
+    this.framebuffers.set(unit, []);
+
+    return fb.getUnit();
   }
 
   public updateTexture(
-    name: string,
+    unit: number,
     textureUpdate: Partial<TextureUpdate>,
   ) {
-    const texture = this.textures.get(name);
+    const texture = this.textures.get(unit);
 
     if ('source' in textureUpdate) {
       texture.setSource(
         textureUpdate.source,
-        textureUpdate.source.width,
-        textureUpdate.source.height,
+        textureUpdate.size || null,
         textureUpdate.flipY,
         textureUpdate.filter,
         textureUpdate.wrap,
@@ -106,14 +115,7 @@ export class View extends EventEmitter {
       }],
       event => this.trigger('error', event),
     );
-
-    this.render();
   }
-
-  // public createBuffer(fragmentSource: string) {
-  //   const gl = this.gl;
-  //   const program = this.createProgramWithFallback(fragmentSource);
-  // }
 
   public resize(width: number, height: number) {
     const gl = this.gl;

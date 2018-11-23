@@ -121,11 +121,11 @@ export class Program {
     width: number,
     height: number,
     uniforms: Uniform[],
-    frameBuffer: WebGLFramebuffer = null,
+    framebuffer: WebGLFramebuffer = null,
   ) {
     const gl = this.gl;
 
-    gl.bindFramebuffer(gl.FRAMEBUFFER, frameBuffer);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
 
     gl.viewport(0, 0, width, height);
 

@@ -2,7 +2,7 @@ import { Filter, Wrap } from './models';
 
 const texturesCounterMap: WeakMap<WebGL2RenderingContext, number> = new WeakMap();
 
-function getNewUnit(gl: WebGL2RenderingContext): number {
+export function getNewUnit(gl: WebGL2RenderingContext): number {
   const lastUnit = texturesCounterMap.has(gl) ? texturesCounterMap.get(gl) : -1;
   const unit = lastUnit + 1;
 
@@ -52,23 +52,20 @@ function setWrap(gl: WebGL2RenderingContext, wrap: [Wrap, Wrap]) {
 }
 
 export class Texture {
-  private unit: number;
   private texture: WebGLTexture;
-  private width: number;
-  private height: number;
 
   constructor(
     private gl: WebGL2RenderingContext,
+    private size: [number, number] = [1, 1],
+    private unit: number = getNewUnit(gl),
   ) {
-    this.unit = getNewUnit(gl);
     this.texture = gl.createTexture();
 
     this.activate();
-    // TODO: create default texture in only unit
-    this.updateSource(new Uint8Array([0, 0, 0, 0]), 1, 1);
+    this.setSource(null, size);
   }
 
-  private activate(): void {
+  public activate(): void {
     const gl = this.gl;
 
     gl.activeTexture(gl.TEXTURE0 + this.unit);
@@ -79,27 +76,21 @@ export class Texture {
     return this.unit;
   }
 
-  public getSize(): [number, number] {
-    return [this.width, this.height];
+  public getTexture(): WebGLTexture {
+    return this.texture;
   }
 
-  private updateSource(
-    source: any,
-    width: number,
-    height: number,
-  ) {
-    const gl = this.gl;
+  public setTexture(texture: WebGLTexture): void {
+    this.texture = texture;
+  }
 
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, source);
-
-    this.width = width;
-    this.height = height;
+  public getSize(): [number, number] {
+    return this.size;
   }
 
   public setSource(
     source: ImageBitmap | ImageData | HTMLImageElement | HTMLCanvasElement | HTMLVideoElement,
-    width: number = source.width,
-    height: number = source.height,
+    size: [number, number] = [source.width, source.height],
     flipY: boolean = true,
     filter: Filter = Filter.NEAREST,
     wrap: [Wrap, Wrap] = [Wrap.CLAMP, Wrap.CLAMP],
@@ -109,8 +100,9 @@ export class Texture {
     this.activate();
 
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, flipY ? 1 : 0);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, size[0], size[1], 0, gl.RGBA, gl.UNSIGNED_BYTE, source);
 
-    this.updateSource(source, width, height);
+    this.size = size;
 
     setFilter(gl, filter);
     setWrap(gl, wrap);
