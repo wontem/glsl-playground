@@ -1,4 +1,4 @@
-import { Filter, Wrap } from './models';
+import { Filter, Wrap, ReadonlyTexture, Resolution } from './models';
 
 const texturesCounterMap: WeakMap<WebGL2RenderingContext, number> = new WeakMap();
 
@@ -23,7 +23,7 @@ function getAppropriateWrap(gl: WebGL2RenderingContext, wrap: Wrap): number {
   }
 }
 
-function getAppropriateFilters(gl: WebGL2RenderingContext, filter: Filter): [number, number] {
+function getAppropriateFilters(gl: WebGL2RenderingContext, filter: Filter): Resolution {
   switch (filter) {
     case Filter.MIPMAP:
       return [gl.LINEAR, gl.LINEAR_MIPMAP_LINEAR];
@@ -51,18 +51,18 @@ function setWrap(gl: WebGL2RenderingContext, wrap: [Wrap, Wrap]) {
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, getAppropriateWrap(gl, wrap[1]));
 }
 
-export class Texture {
+export class Texture implements ReadonlyTexture {
   private texture: WebGLTexture;
 
   constructor(
     private gl: WebGL2RenderingContext,
-    private size: [number, number] = [1, 1],
+    private resolution: Resolution = [1, 1],
     private unit: number = getNewUnit(gl),
   ) {
     this.texture = gl.createTexture();
 
     this.activate();
-    this.setSource(null, size);
+    this.setData(new Uint8Array([0, 0, 0, 0]), resolution);
   }
 
   public activate(): void {
@@ -84,13 +84,13 @@ export class Texture {
     this.texture = texture;
   }
 
-  public getSize(): [number, number] {
-    return this.size;
+  public getResolution(): Resolution {
+    return this.resolution;
   }
 
   public setSource(
     source: ImageBitmap | ImageData | HTMLImageElement | HTMLCanvasElement | HTMLVideoElement,
-    size: [number, number] = [source.width, source.height],
+    resolution: Resolution = [source.width, source.height],
     flipY: boolean = true,
     filter: Filter = Filter.NEAREST,
     wrap: [Wrap, Wrap] = [Wrap.CLAMP, Wrap.CLAMP],
@@ -100,12 +100,43 @@ export class Texture {
     this.activate();
 
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, flipY ? 1 : 0);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, size[0], size[1], 0, gl.RGBA, gl.UNSIGNED_BYTE, source);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, resolution[0], resolution[1], 0, gl.RGBA, gl.UNSIGNED_BYTE, source);
 
-    this.size = size;
+    this.resolution = resolution;
 
     setFilter(gl, filter);
     setWrap(gl, wrap);
+  }
+
+  public setData(
+    source: Uint8Array,
+    resolution: Resolution,
+    flipY: boolean = true,
+    filter: Filter = Filter.NEAREST,
+    wrap: [Wrap, Wrap] = [Wrap.CLAMP, Wrap.CLAMP],
+  ) {
+    const gl = this.gl;
+
+    this.activate();
+
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, flipY ? 1 : 0);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, resolution[0], resolution[1], 0, gl.RGBA, gl.UNSIGNED_BYTE, source, 0);
+
+    this.resolution = resolution;
+
+    setFilter(gl, filter);
+    setWrap(gl, wrap);
+  }
+
+  public setSubImage(
+    source: Uint8Array,
+    resolution: Resolution,
+  ) {
+    const gl = this.gl;
+
+    this.activate();
+
+    gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, resolution[0], resolution[1], gl.RGBA, gl.UNSIGNED_BYTE, source, 0);
   }
 
   public setFilter(filter: Filter): void {

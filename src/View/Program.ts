@@ -1,6 +1,6 @@
 import * as defaultShaders from './defaultShaders';
 import { getGLSLVersion } from './utils/getGLSLVersion';
-import { ViewEventType, ViewEvent, Uniform, Attribute } from './models';
+import { ViewEventType, ViewEvent, Uniform, Attribute, Resolution } from './models';
 
 const defaultProgramMap: WeakMap<WebGL2RenderingContext, WebGLProgram> = new WeakMap();
 
@@ -118,8 +118,7 @@ export class Program {
   }
 
   public render(
-    width: number,
-    height: number,
+    [width, height]: Resolution,
     uniforms: Uniform[],
     framebuffer: WebGLFramebuffer = null,
   ) {
@@ -161,7 +160,7 @@ export class Program {
 
     const buffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data), gl.STATIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data), gl.STATIC_DRAW, 0);
 
     const location = gl.getAttribLocation(this.program, name);
     gl.enableVertexAttribArray(location);

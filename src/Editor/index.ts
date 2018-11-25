@@ -5,6 +5,7 @@ import 'codemirror/keymap/sublime';
 
 import { View } from '../View';
 import frag from './fragment.glsl';
+import fragbuffer from './fragbuffer.glsl';
 import i from './k.jpg';
 import o from './o.jpg';
 import './style.css';
@@ -16,7 +17,7 @@ document.body.appendChild(canvas);
 
 const cm = codemirror(document.body, {
   mode: 'x-shader/x-fragment',
-  value: frag,
+  value: [fragbuffer, frag].join('\n=== buffer ===\n'),
   lineNumbers: true,
   keyMap: 'sublime',
   viewportMargin: Infinity,
@@ -24,7 +25,9 @@ const cm = codemirror(document.body, {
 
 cm.on('change', (cm) => {
   clearWidgets();
-  v.load(cm.getValue());
+  v.load(cm.getValue().split('\n=== buffer ===\n'));
+  startTime = performance.now();
+  currentFrame = 0;
 });
 
 const v = new View(canvas.getContext('webgl2') as WebGL2RenderingContext);
@@ -62,11 +65,13 @@ function setWidgets(logs: Log[]) {
 v.on('error', (event: ViewEvent) => {
   const parsedLogs = parseLogs(event.message);
 
+  console.log(parsedLogs);
+
   setWidgets(parsedLogs);
 });
 
 const texture = v.createTexture();
-v.load(frag);
+v.load([fragbuffer, frag]);
 
 const ii = new Image();
 ii.onload = () => {
@@ -91,13 +96,24 @@ ii.src = i;
 //   4000,
 // );
 
+let currentFrame = 0;
+let startTime = null;
 requestAnimationFrame(function frame() {
+  if (startTime === null) {
+    startTime = performance.now();
+  }
+
   v.render(
     [
       {
         name: 'u_time',
         method: '1f',
-        value: [performance.now() / 1000],
+        value: [(performance.now() - startTime) / 1000],
+      },
+      {
+        name: 'u_frame',
+        method: '1f',
+        value: [currentFrame],
       },
       {
         name: 'u_resolution',
@@ -109,7 +125,7 @@ requestAnimationFrame(function frame() {
       ['u_image', texture],
     ],
   );
-
+  currentFrame += 1;
   requestAnimationFrame(frame);
 });
 

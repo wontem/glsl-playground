@@ -34,8 +34,22 @@ export enum Wrap {
 
 export interface TextureUpdate {
   source: ImageBitmap | ImageData | HTMLImageElement | HTMLCanvasElement | HTMLVideoElement;
-  size: [number, number];
+  resolution: Resolution;
   flipY: boolean;
   filter: Filter;
   wrap: [Wrap, Wrap];
 }
+
+export interface ReadonlyTexture {
+  getResolution(): Resolution;
+  getUnit(): number;
+}
+
+export type Resolution = [number, number];
+
+// export interface Config {
+//   textures: string[];
+//   buffers: string[];
+//   resolution: Resolution;
+//   buffersOrder: string[];
+// }
