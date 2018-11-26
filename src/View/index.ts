@@ -15,6 +15,7 @@ export class View extends EventEmitter {
   private buffers: Map<string, BufferLink>;
   private buffersOrder: string[];
   private mainProgram: Program;
+  private outputBufferName: string;
 
   constructor(
     private gl: WebGL2RenderingContext,
@@ -24,7 +25,8 @@ export class View extends EventEmitter {
     this.textures = new Map();
     this.buffers = new Map();
     this.buffersOrder = [];
-    this.mainProgram = this.createProgram(defaultShaders.getFragmentShaderSource());
+
+    this.resetMainProgram();
   }
 
   private trigger(level: string, event: ViewEvent): void {
@@ -189,5 +191,40 @@ export class View extends EventEmitter {
 
   public setBufferToOutput(bufferName: string): void {
     this.mainProgram.update(defaultShaders.getViewProgramFragmentShaderSource(bufferName));
+    this.outputBufferName = bufferName;
+  }
+
+  public resetMainProgram(): void {
+    if (this.mainProgram) {
+      this.mainProgram.update(defaultShaders.getFragmentShaderSource());
+    } else {
+      this.mainProgram = this.createProgram(defaultShaders.getFragmentShaderSource());
+    }
+
+    this.outputBufferName = null;
+  }
+
+  public removeBuffer(bufferName: string): void {
+    const bufferLink = this.buffers.get(bufferName);
+
+    if (bufferLink) {
+      bufferLink.output.destroy();
+      bufferLink.program.destroy();
+
+      this.buffers.delete(bufferName);
+    }
+
+    if (this.outputBufferName === bufferName) {
+      this.resetMainProgram();
+    }
+  }
+
+  public removeTexture(textureName: string): void {
+    const texture = this.textures.get(textureName);
+
+    if (texture) {
+      texture.destroy();
+      this.textures.delete(textureName);
+    }
   }
 }

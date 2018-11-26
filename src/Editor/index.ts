@@ -5,7 +5,6 @@ import 'codemirror/keymap/sublime';
 
 import { View } from '../View';
 import frag from './fragment.glsl';
-import fragbuffer from './fragbuffer.glsl';
 import i from './k.jpg';
 import o from './o.jpg';
 import './style.css';
@@ -17,7 +16,7 @@ document.body.appendChild(canvas);
 
 const cm = codemirror(document.body, {
   mode: 'x-shader/x-fragment',
-  value: [fragbuffer, frag].join('\n=== buffer ===\n'),
+  value: frag,
   lineNumbers: true,
   keyMap: 'sublime',
   viewportMargin: Infinity,
@@ -25,7 +24,7 @@ const cm = codemirror(document.body, {
 
 cm.on('change', (cm) => {
   clearWidgets();
-  // v.load(cm.getValue().split('\n=== buffer ===\n'));
+  v.updateBuffer('channel0', cm.getValue());
   startTime = performance.now();
   currentFrame = 0;
 });
@@ -71,10 +70,9 @@ v.on('error', (event: ViewEvent) => {
 });
 
 v.createTexture('u_image');
-v.createBuffer('channel0', fragbuffer);
-v.createBuffer('channel1', frag);
-v.setBuffersOrder(['channel0', 'channel1']);
-v.setBufferToOutput('channel1');
+v.createBuffer('channel0', frag);
+v.setBuffersOrder(['channel0']);
+v.setBufferToOutput('channel0');
 
 const ii = new Image();
 ii.onload = () => {
@@ -83,8 +81,8 @@ ii.onload = () => {
     flipY: true,
   });
 
-  const ratio = devicePixelRatio;
-  // const ratio = 1; // devicePixelRatio;
+  // const ratio = devicePixelRatio;
+  const ratio = 1; // devicePixelRatio;
   v.resize(ii.width * ratio, ii.height * ratio);
   canvas.style.width = `${Math.floor(canvas.width / ratio)}px`;
   canvas.style.height = `${Math.floor(canvas.height / ratio)}px`;

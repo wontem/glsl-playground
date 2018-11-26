@@ -59,6 +59,17 @@ class Framebuffer {
     this.textureInput.setData(new Uint8Array(resolution[0] * resolution[1] * 4), resolution);
     this.textureInput.setSubImage(pixelsData.pixels, pixelsData.resolution);
   }
+
+  public destroy(): void {
+    this.gl.deleteFramebuffer(this.fbo);
+    this.fbo = null;
+
+    this.textureInput.destroy();
+    this.textureOutput.destroy();
+
+    this.textureInput = null;
+    this.textureOutput = null;
+  }
 }
 
 export class DoubleFramebuffer implements ReadonlyTexture {
@@ -101,5 +112,11 @@ export class DoubleFramebuffer implements ReadonlyTexture {
     this.currentFB.resize(resolution);
     this.alternativeFB.resize(resolution);
     this.resolution = resolution;
+  }
+
+  public destroy(): void {
+    this.currentFB.destroy();
+    this.alternativeFB.destroy();
+    this.unit = -1;
   }
 }

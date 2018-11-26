@@ -188,12 +188,19 @@ export class Program {
       return;
     }
 
-    this.gl.deleteProgram(this.program);
+    this.destroyProgram();
     this.program = this.createProgram(fragmentSource);
+    this.fragmentSource = fragmentSource;
+  }
+
+  private destroyProgram(): void {
+    if (getDefaultProgram(this.gl) !== this.program) {
+      this.gl.deleteProgram(this.program);
+    }
   }
 
   public destroy(): void {
-    this.gl.deleteProgram(this.program);
+    this.destroyProgram();
     this.gl.deleteVertexArray(this.vao);
 
     this.program = null;

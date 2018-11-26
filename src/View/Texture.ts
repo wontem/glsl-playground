@@ -1,14 +1,35 @@
 import { Filter, Wrap, ReadonlyTexture, Resolution } from './models';
 
-const texturesCounterMap: WeakMap<WebGL2RenderingContext, number> = new WeakMap();
+const texturesCounterMap: WeakMap<WebGL2RenderingContext, Set<number>> = new WeakMap();
 
 export function getNewUnit(gl: WebGL2RenderingContext): number {
-  const lastUnit = texturesCounterMap.has(gl) ? texturesCounterMap.get(gl) : -1;
-  const unit = lastUnit + 1;
+  const unitsSet: Set<number> = texturesCounterMap.has(gl) ? texturesCounterMap.get(gl) : new Set();
 
-  texturesCounterMap.set(gl, unit);
+  let unit = 0;
+
+  while (unitsSet.has(unit)) {
+    unit += 1;
+  }
+
+  texturesCounterMap.set(gl, unitsSet);
 
   return unit;
+}
+
+export function unlockUnit(gl: WebGL2RenderingContext, unit: number): void {
+  if (!texturesCounterMap.has(gl)) {
+    return;
+  }
+
+  const unitsSet: Set<number> = texturesCounterMap.get(gl);
+  unitsSet.delete(unit);
+}
+
+export function lockUnit(gl: WebGL2RenderingContext, unit: number): void {
+  const unitsSet: Set<number> = texturesCounterMap.has(gl) ? texturesCounterMap.get(gl) : new Set();
+
+  unitsSet.add(unit);
+  texturesCounterMap.set(gl, unitsSet);
 }
 
 function getAppropriateWrap(gl: WebGL2RenderingContext, wrap: Wrap): number {
@@ -59,6 +80,7 @@ export class Texture implements ReadonlyTexture {
     private resolution: Resolution = [1, 1],
     private unit: number = getNewUnit(gl),
   ) {
+    lockUnit(this.gl, this.unit);
     this.texture = gl.createTexture();
 
     this.activate();
@@ -153,5 +175,14 @@ export class Texture implements ReadonlyTexture {
     this.activate();
 
     setWrap(gl, wrap);
+  }
+
+  public destroy() {
+    this.gl.deleteTexture(this.texture);
+    this.texture = null;
+
+    unlockUnit(this.gl, this.unit);
+
+    this.unit = -1;
   }
 }
