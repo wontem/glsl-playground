@@ -5,15 +5,16 @@ import { Program } from './Program';
 import { Texture } from './Texture';
 import { DoubleFramebuffer } from './Framebuffer';
 
-interface ProgramConfig {
+interface BufferLink {
   program: Program;
   output: DoubleFramebuffer;
 }
 
 export class View extends EventEmitter {
-  private programs: ProgramConfig[];
-  private textures: Map<number, Texture>;
-  private framebuffers: Map<number, DoubleFramebuffer>;
+  private textures: Map<string, Texture>;
+  private buffers: Map<string, BufferLink>;
+  private buffersOrder: string[];
+  private mainProgram: Program;
 
   constructor(
     private gl: WebGL2RenderingContext,
@@ -21,7 +22,9 @@ export class View extends EventEmitter {
     super();
 
     this.textures = new Map();
-    this.load([defaultShaders.getFragmentShaderSource()]);
+    this.buffers = new Map();
+    this.buffersOrder = [];
+    this.mainProgram = this.createProgram(defaultShaders.getFragmentShaderSource());
   }
 
   private trigger(level: string, event: ViewEvent): void {
@@ -30,11 +33,16 @@ export class View extends EventEmitter {
 
   public render(
     uniforms: Uniform[] = [],
-    textures: [string, number][] = [],
   ) {
-    const textureUniforms: Uniform[] = textures.reduce<Uniform[]>(
-      (uniforms, [name, unit]) => {
-        const texture = this.textures.get(unit);
+    const textures = [...this.textures];
+    const buffers = [...this.buffers].map<[string, DoubleFramebuffer]>(([name, { output }]) => [name, output]);
+
+    const textureUniforms: Uniform[] = [
+      ...textures,
+      ...buffers,
+    ].reduce<Uniform[]>(
+      (uniforms, [name, item]) => {
+        const unit = item.getUnit();
 
         return [
           ...uniforms,
@@ -46,32 +54,7 @@ export class View extends EventEmitter {
           {
             name: `${name}_resolution`,
             method: '2f',
-            value: texture.getResolution(),
-          },
-        ];
-      },
-      [],
-    );
-
-    const fbUniforms: Uniform[] = this.programs.reduce<Uniform[]>(
-      (uniforms, { output }, index) => {
-        if (!output) {
-          return uniforms;
-        }
-
-        const name = `channel${index}`;
-
-        return [
-          ...uniforms,
-          {
-            name,
-            method: '1i',
-            value: [output.getUnit()],
-          },
-          {
-            name: `${name}_resolution`,
-            method: '2f',
-            value: output.getResolution(),
+            value: item.getResolution(),
           },
         ];
       },
@@ -81,46 +64,46 @@ export class View extends EventEmitter {
     const allUniforms = [
       ...textureUniforms,
       ...uniforms,
-      ...fbUniforms,
     ];
 
-    this.programs.forEach(({ program, output }) => {
-      if (output) {
-        output.activate();
+    this.buffersOrder.forEach((bufferName) => {
+      const { program, output } = this.buffers.get(bufferName);
 
-        program.render(
-          output.getResolution(),
-          allUniforms,
-          output.getCurrentFramebuffer(),
-        );
+      output.activate();
 
-        output.swap();
-      } else {
-        program.render(
-          [
-            this.gl.drawingBufferWidth,
-            this.gl.drawingBufferHeight,
-          ],
-          allUniforms,
-          null,
-        );
-      }
+      program.render(
+        output.getResolution(),
+        allUniforms,
+        output.getCurrentFramebuffer(),
+      );
+
+      output.swap();
     });
+
+    this.mainProgram.render(
+      [
+        this.gl.drawingBufferWidth,
+        this.gl.drawingBufferHeight,
+      ],
+      allUniforms,
+      null,
+    );
   }
 
-  public createTexture(): number {
-    const texture = new Texture(this.gl);
-    const unit = texture.getUnit();
-    this.textures.set(unit, texture);
+  public setBuffersOrder(buffersOrder: string[]) {
+    this.buffersOrder = buffersOrder;
+  }
 
-    return unit;
+  public createTexture(name: string): void {
+    const texture = new Texture(this.gl);
+    this.textures.set(name, texture);
   }
 
   public updateTexture(
-    unit: number,
+    name: string,
     textureUpdate: Partial<TextureUpdate>,
   ) {
-    const texture = this.textures.get(unit);
+    const texture = this.textures.get(name);
 
     if ('source' in textureUpdate) {
       texture.setSource(
@@ -140,7 +123,7 @@ export class View extends EventEmitter {
     }
   }
 
-  public load(fragmentSources: string[]) {
+  private createProgram(fragmentSource: string, onError?: (event: ViewEvent) => void) {
     const gl = this.gl;
 
     const attributes: Attribute[] = [{
@@ -149,31 +132,48 @@ export class View extends EventEmitter {
       size: 2,
     }];
 
-    this.programs = fragmentSources.map<ProgramConfig>((fragmentSource, index, array) => {
-      const program = new Program(
-        gl,
-        fragmentSource,
-        attributes,
-        event => this.trigger('error', event),
-      );
+    const program = new Program(
+      gl,
+      fragmentSource,
+      attributes,
+      onError,
+    );
 
-      const output = index === array.length - 1 ? null : new DoubleFramebuffer(gl);
-
-      return {
-        program,
-        output,
-      };
-    });
-
+    return program;
   }
 
-  public resize(width: number, height: number) {
+  public createBuffer(bufferName: string, fragmentSource: string): void {
     const gl = this.gl;
 
-    this.programs.forEach(({ program, output }) => {
-      if (output) {
-        output.resize([width, height]);
-      }
+    if (this.buffers.has(bufferName)) {
+      console.warn(`Buffer ${bufferName} is already created. Use .updateBuffer() instead`);
+      return;
+    }
+
+    const program = this.createProgram(fragmentSource, (event) => {
+      event.programName = bufferName;
+      this.trigger('error', event);
+    });
+    const output = new DoubleFramebuffer(gl);
+
+    this.buffers.set(bufferName, { program, output });
+  }
+
+  public updateBuffer(bufferName: string, fragmentSource: string): void {
+    if (!this.buffers.has(bufferName)) {
+      console.warn(`Buffer ${bufferName} doesn't exist. Use .createBuffer() instead`);
+      return;
+    }
+
+    const bufferLink = this.buffers.get(bufferName);
+    bufferLink.program.update(fragmentSource);
+  }
+
+  public resize(width: number, height: number): void {
+    const gl = this.gl;
+
+    this.buffers.forEach(({ output }) => {
+      output.resize([width, height]);
     });
 
     if (
@@ -185,5 +185,9 @@ export class View extends EventEmitter {
 
       gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
     }
+  }
+
+  public setBufferToOutput(bufferName: string): void {
+    this.mainProgram.update(defaultShaders.getViewProgramFragmentShaderSource(bufferName));
   }
 }

@@ -49,7 +49,7 @@ class Framebuffer {
 
     return {
       pixels,
-      resolution,
+      resolution: [width, height],
     };
   }
 

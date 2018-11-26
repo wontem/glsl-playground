@@ -25,7 +25,7 @@ const cm = codemirror(document.body, {
 
 cm.on('change', (cm) => {
   clearWidgets();
-  v.load(cm.getValue().split('\n=== buffer ===\n'));
+  // v.load(cm.getValue().split('\n=== buffer ===\n'));
   startTime = performance.now();
   currentFrame = 0;
 });
@@ -70,12 +70,15 @@ v.on('error', (event: ViewEvent) => {
   setWidgets(parsedLogs);
 });
 
-const texture = v.createTexture();
-v.load([fragbuffer, frag]);
+v.createTexture('u_image');
+v.createBuffer('channel0', fragbuffer);
+v.createBuffer('channel1', frag);
+v.setBuffersOrder(['channel0', 'channel1']);
+v.setBufferToOutput('channel1');
 
 const ii = new Image();
 ii.onload = () => {
-  v.updateTexture(texture, {
+  v.updateTexture('u_image', {
     source: ii,
     flipY: true,
   });
@@ -120,9 +123,6 @@ requestAnimationFrame(function frame() {
         method: '2f',
         value: [canvas.width, canvas.height],
       },
-    ],
-    [
-      ['u_image', texture],
     ],
   );
   currentFrame += 1;

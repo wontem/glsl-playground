@@ -95,26 +95,12 @@ export class Program {
 
   constructor(
     private gl: WebGL2RenderingContext,
-    fragmentSource: string,
+    private fragmentSource: string,
     attributes: Attribute[],
     private onError?: (event: ViewEvent) => void,
   ) {
-    const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentSource, this.onError);
-
-    if (!fragmentShader) {
-      this.program = getDefaultProgram(gl);
-      this.vao = null;
-    } else {
-      const version = getGLSLVersion(fragmentSource);
-      const vertexShader = createShader(gl, gl.VERTEX_SHADER, defaultShaders.getVertexShaderSource(version));
-      const program = createProgram(gl, vertexShader, fragmentShader, this.onError);
-
-      gl.deleteShader(vertexShader);
-      gl.deleteShader(fragmentShader);
-
-      this.program = program;
-      this.vao = this.createVAO(attributes);
-    }
+    this.program = this.createProgram(fragmentSource);
+    this.vao = this.createVAO(attributes);
   }
 
   public render(
@@ -177,5 +163,40 @@ export class Program {
     });
 
     return vao;
+  }
+
+  private createProgram(fragmentSource: string): WebGLProgram {
+    const gl = this.gl;
+    const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentSource, this.onError);
+
+    if (!fragmentShader) {
+      return getDefaultProgram(gl);
+    }
+
+    const version = getGLSLVersion(fragmentSource);
+    const vertexShader = createShader(gl, gl.VERTEX_SHADER, defaultShaders.getVertexShaderSource(version));
+    const program = createProgram(gl, vertexShader, fragmentShader, this.onError);
+
+    gl.deleteShader(vertexShader);
+    gl.deleteShader(fragmentShader);
+
+    return program;
+  }
+
+  public update(fragmentSource: string): void {
+    if (this.fragmentSource === fragmentSource) {
+      return;
+    }
+
+    this.gl.deleteProgram(this.program);
+    this.program = this.createProgram(fragmentSource);
+  }
+
+  public destroy(): void {
+    this.gl.deleteProgram(this.program);
+    this.gl.deleteVertexArray(this.vao);
+
+    this.program = null;
+    this.vao = null;
   }
 }

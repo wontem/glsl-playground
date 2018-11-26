@@ -111,7 +111,7 @@ export class Texture implements ReadonlyTexture {
   public setData(
     source: Uint8Array,
     resolution: Resolution,
-    flipY: boolean = true,
+    flipY: boolean = false,
     filter: Filter = Filter.NEAREST,
     wrap: [Wrap, Wrap] = [Wrap.CLAMP, Wrap.CLAMP],
   ) {

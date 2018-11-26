@@ -4,6 +4,7 @@ export enum ViewEventType {
 }
 
 export interface ViewEvent {
+  programName?: string;
   type: ViewEventType;
   message: string;
 }
