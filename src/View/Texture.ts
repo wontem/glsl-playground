@@ -84,7 +84,7 @@ export class Texture implements ReadonlyTexture {
     this.texture = gl.createTexture();
 
     this.activate();
-    this.setData(new Uint8Array([0, 0, 0, 0]), resolution);
+    this.setData(new Uint8Array(resolution[0] * resolution[1] * 4), resolution);
   }
 
   public activate(): void {

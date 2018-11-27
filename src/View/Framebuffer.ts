@@ -98,6 +98,8 @@ export class DoubleFramebuffer implements ReadonlyTexture {
 
   public swap(): void {
     [this.currentFB, this.alternativeFB] = [this.alternativeFB, this.currentFB];
+
+    this.currentFB.activate();
   }
 
   public getUnit(): number {

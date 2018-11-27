@@ -34,7 +34,7 @@ function createShader(
   gl: WebGL2RenderingContext,
   type: number,
   source: string,
-  onError?: (event: ViewEvent) => void,
+  errors?: ViewEvent[],
 ): WebGLShader {
   const shader = gl.createShader(type);
 
@@ -47,8 +47,8 @@ function createShader(
     return shader;
   }
 
-  if (onError) {
-    onError({
+  if (errors) {
+    errors.push({
       type: ViewEventType.CREATE_SHADER,
       message: gl.getShaderInfoLog(shader),
     });
@@ -63,7 +63,7 @@ function createProgram(
   gl: WebGL2RenderingContext,
   vertexShader: WebGLShader,
   fragmentShader: WebGLShader,
-  onError?: (event: ViewEvent) => void,
+  errors?: ViewEvent[],
 ): WebGLProgram {
   const program = gl.createProgram();
 
@@ -77,8 +77,8 @@ function createProgram(
     return program;
   }
 
-  if (onError) {
-    onError({
+  if (errors) {
+    errors.push({
       type: ViewEventType.CREATE_PROGRAM,
       message: gl.getProgramInfoLog(program),
     });
@@ -92,14 +92,14 @@ function createProgram(
 export class Program {
   private program: WebGLProgram;
   private vao: WebGLVertexArrayObject;
+  private fragmentSource: string;
 
   constructor(
     private gl: WebGL2RenderingContext,
-    private fragmentSource: string,
     attributes: Attribute[],
-    private onError?: (event: ViewEvent) => void,
   ) {
-    this.program = this.createProgram(fragmentSource);
+    this.fragmentSource = '';
+    this.program = getDefaultProgram(gl);
     this.vao = this.createVAO(attributes);
   }
 
@@ -165,9 +165,9 @@ export class Program {
     return vao;
   }
 
-  private createProgram(fragmentSource: string): WebGLProgram {
+  private createProgram(fragmentSource: string, errors: ViewEvent[]): WebGLProgram {
     const gl = this.gl;
-    const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentSource, this.onError);
+    const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentSource, errors);
 
     if (!fragmentShader) {
       return getDefaultProgram(gl);
@@ -175,35 +175,42 @@ export class Program {
 
     const version = getGLSLVersion(fragmentSource);
     const vertexShader = createShader(gl, gl.VERTEX_SHADER, defaultShaders.getVertexShaderSource(version));
-    const program = createProgram(gl, vertexShader, fragmentShader, this.onError);
+    const program = createProgram(gl, vertexShader, fragmentShader, errors);
 
     gl.deleteShader(vertexShader);
     gl.deleteShader(fragmentShader);
 
-    return program;
+    return program || getDefaultProgram(gl);
   }
 
-  public update(fragmentSource: string): void {
-    if (this.fragmentSource === fragmentSource) {
-      return;
+  public update(fragmentSource: string): ViewEvent[] {
+    const errors: ViewEvent[] = [];
+
+    if (this.fragmentSource !== fragmentSource) {
+      this.destroyProgram();
+      this.program = this.createProgram(fragmentSource, errors);
+      this.fragmentSource = fragmentSource;
     }
 
-    this.destroyProgram();
-    this.program = this.createProgram(fragmentSource);
-    this.fragmentSource = fragmentSource;
+    return errors;
   }
 
   private destroyProgram(): void {
     if (getDefaultProgram(this.gl) !== this.program) {
       this.gl.deleteProgram(this.program);
     }
+
+    this.program = null;
   }
 
   public destroy(): void {
     this.destroyProgram();
     this.gl.deleteVertexArray(this.vao);
 
-    this.program = null;
     this.vao = null;
+  }
+
+  public getSource(): string {
+    return this.fragmentSource;
   }
 }
