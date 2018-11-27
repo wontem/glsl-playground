@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "es2017",
+    "target": "ES6",
     "alwaysStrict": true,
     "outDir": "./dist/",
     "sourceMap": true,
@@ -11,10 +11,11 @@
     // "noUnusedLocals": true,
     "module": "esnext",
     "moduleResolution": "node",
+    "jsx": "react",
     "lib": [
       "es2017",
       "dom",
-      "dom.iterable"
+      // "dom.iterable"
     ]
   },
   "include": [

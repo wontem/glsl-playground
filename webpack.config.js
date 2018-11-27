@@ -1,17 +1,23 @@
 const path = require('path');
+const createStyledComponentsTransformer = require('typescript-plugin-styled-components').default;
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 // const WebpackNotifierPlugin = require('webpack-notifier');
+
+const styledComponentsTransformer = createStyledComponentsTransformer();
 
 module.exports = {
   mode: 'development',
   devtool: 'inline-source-map',
-  entry: './src/Editor/index.ts',
+  entry: './src/Editor/index.tsx',
   module: {
     rules: [
       {
-        test: /\.ts$/,
+        test: /\.tsx?$/,
         exclude: /node_modules/,
         loader: 'ts-loader',
+        options: {
+          getCustomTransformers: () => ({ before: [styledComponentsTransformer] }),
+        }
       },
       {
         test: /\.glsl$/,
@@ -24,14 +30,22 @@ module.exports = {
       {
         test: /\.css$/,
         use: [
-          { loader: 'style-loader' },
-          { loader: 'css-loader' }
+          {
+            loader: 'style-loader',
+          },
+          {
+            loader: 'css-loader',
+            // options: {
+            //   modules: true,
+            //   localIdentName: '[path][name]__[local]--[hash:base64:5]'
+            // },
+          }
         ]
       }
     ]
   },
   resolve: {
-    extensions: [ '.ts', '.js' ]
+    extensions: [ '.tsx', '.ts', '.js' ]
   },
   output: {
     filename: 'main.js',
