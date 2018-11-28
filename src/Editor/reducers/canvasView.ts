@@ -1,6 +1,5 @@
-import { Reducer } from 'redux';
-
 import { handleActions } from 'redux-actions';
+
 import { ActionTypes } from '../actionTypes/canvasView';
 import * as ActionCreators from '../actions/canvasView';
 import { parseLogs } from '../../View/utils/parseLogs';

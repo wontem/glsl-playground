@@ -1,14 +1,16 @@
+import { LineWidget } from 'codemirror';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import styled from 'styled-components';
 import { Controlled as CodeMirror, ICodeMirror, IInstance } from 'react-codemirror2';
+
 import { updateBufferRequest } from '../actions/canvasView';
+import { BufferInfo } from '../reducers/canvasView';
 
 import 'codemirror/lib/codemirror.css';
 import 'codemirror/mode/clike/clike';
 import 'codemirror/keymap/sublime';
-import { BufferInfo } from '../reducers/canvasView';
-import { LineWidget } from 'codemirror';
+
 
 const CM = styled(CodeMirror)`
   display: flex;
@@ -55,7 +57,7 @@ const Line = styled.div`
   }
 `
 
-const ErrorLine = (props) => (
+const ErrorLine = (props: any) => (
   <Line>
     <div>{props.item}</div>
     <div>{props.message}</div>
@@ -67,7 +69,7 @@ export class Editor extends React.Component<Props, State> {
   private instance: IInstance;
   private widgets: [HTMLElement, LineWidget][];
 
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
 
     this.instance = null;
@@ -93,15 +95,11 @@ export class Editor extends React.Component<Props, State> {
     this.props.onChange(this.props.name, value);
   }
 
-  componentDidUpdate(prevProps) {
+  componentDidUpdate(prevProps: Props) {
     if (this.props.source !== prevProps.source) {
       this.setState({
         value: this.props.source,
-      });
-    }
-
-    if (this.props.errors !== prevProps.errors) {
-      if (this.instance) {
+      }, () => {
         this.clearWidgets();
         this.props.errors.forEach((log) => {
           const line = document.createElement('div');
@@ -116,7 +114,7 @@ export class Editor extends React.Component<Props, State> {
 
           this.widgets.push([line, widget]);
         });
-      }
+      });
     }
   }
 
@@ -130,6 +128,7 @@ export class Editor extends React.Component<Props, State> {
           lineNumbers: true,
           keyMap: 'sublime',
           viewportMargin: Infinity,
+          readOnly: !this.props.name,
         }}
         onBeforeChange={(editor, data, value) => {
           this.setState({ value });

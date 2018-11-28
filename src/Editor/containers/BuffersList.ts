@@ -1,4 +1,4 @@
-import { connect } from 'react-redux';
+import { connect, MapDispatchToProps, MapDispatchToPropsFunction } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { createStructuredSelector } from 'reselect';
 import { BuffersList as Component } from '../components/BuffersList';
@@ -13,7 +13,7 @@ const mapStateToProps = createStructuredSelector({
   buffersOrder: Selectors.buffersOrder,
 });
 
-const mapDispatchToProps = dispatch => bindActionCreators(
+const mapDispatchToProps = (dispatch: any) => bindActionCreators(
   {
     createBuffer: ActionCreators.createBuffer,
     selectBuffer: ActionCreators.selectBuffer,

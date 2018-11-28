@@ -12,7 +12,7 @@ const mapStateToProps = createStructuredSelector({
   errors: Selectors.currentBufferErrors,
 });
 
-const mapDispatchToProps = dispatch => bindActionCreators(
+const mapDispatchToProps = (dispatch: any) => bindActionCreators(
   {
     onChange: ActionCreators.updateBufferRequest,
   },

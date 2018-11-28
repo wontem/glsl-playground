@@ -1,0 +1,4 @@
+export enum ActionTypes {
+  TOGGLE_ANIMATION = 'TOGGLE_ANIMATION',
+  RESET_ANIMATION = 'RESET_ANIMATION',
+}

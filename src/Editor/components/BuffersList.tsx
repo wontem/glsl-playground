@@ -2,6 +2,7 @@ import * as React from 'react';
 import styled from 'styled-components';
 
 import * as ActionCreators from '../actions/canvasView';
+import { Point } from './Point';
 
 interface BuffersListProps {
   bufferNames: string[];
@@ -57,29 +58,12 @@ class BuffersListItem extends React.Component<BuffersListItemProps> {
     return (
       <li className={this.props.className}>
         <Name onClick={this.select}>{this.props.bufferName}</Name>
-        <Output onClick={this.setOutput}></Output>
-        <Minus onClick={this.remove}></Minus>
+        <Point color={'#00a6ff'} isActive={this.props.isOutputBuffer} onClick={this.setOutput}></Point>
+        <Point color={'#cc0000'} onClick={this.remove}></Point>
       </li>
     );
   }
 }
-
-const Point = styled.div`
-  width: 16px;
-  height: 16px;
-  border-radius: 100%;
-  margin: 8px;
-  background: grey;
-  flex-grow: 0;
-  flex-shrink: 0;
-  opacity: .5;
-  cursor: pointer;
-  box-sizing: border-box;
-`;
-
-const Plus = styled(Point)`
-  background: #008000;
-`
 
 const PlusBlock = styled.div`
   display: flex;
@@ -87,22 +71,9 @@ const PlusBlock = styled.div`
   flex-shrink: 0;
 `;
 
-const Output = styled(Point)`
-  background: #00a6ff;
-`
-
-const Minus = styled(Point)`
-  background: #cc0000;
-`
-
 const ListItem = styled(BuffersListItem)`
   display: flex;
   background: ${props => props.isSelected ? 'hsla(210, 100%, 50%, .1)' : 'transparent'};
-
-  & ${Output} {
-    background: ${props => props.isOutputBuffer ? '#00a6ff' : 'transparent'};
-    border: ${props => props.isOutputBuffer ? 'none' : '1px solid #00a6ff'};
-  }
 
   &:hover ${Point} {
     opacity: 1;
@@ -169,7 +140,7 @@ export class BuffersList extends React.Component<BuffersListProps> {
     return (
       <Panel>
         <PlusBlock>
-          <Plus onClick={this.props.createBuffer}></Plus>
+          <Point color={'#008000'} onClick={this.props.createBuffer}></Point>
         </PlusBlock>
         <ChannelsList>
           {listItems}

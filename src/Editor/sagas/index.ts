@@ -1,18 +1,34 @@
-import { eventChannel } from 'redux-saga';
-import { takeEvery, select, put, call, take } from 'redux-saga/effects';
+import { takeEvery, select, put } from 'redux-saga/effects';
 
-import { ActionTypes } from '../actionTypes/canvasView';
+import { ActionTypes as CanvasViewActionTypes } from '../actionTypes/canvasView';
+import { ActionTypes as AnimationActionTypes } from '../actionTypes/animation';
 import * as ActionCreators from '../actions/canvasView';
+import * as AnimationActionCreators from '../actions/animation';
 import * as Selectors from '../selectors/canvasView';
-
 import { getView, init as initView } from '../api/canvasView';
-import { View } from '../../View';
 import { BufferInfo } from '../reducers/canvasView';
-import { ViewEvent, ViewEventType } from '../../View/models';
+import { ViewEventType } from '../../View/models';
 import { parseLogs } from '../../View/utils/parseLogs';
 
-function* init(action: ReturnType<typeof ActionCreators.init>) {
-  const v = initView(action.payload);
+function render() {
+  getView().render(
+    [
+      {
+        name: 'u_time',
+        method: '1f',
+        value: [lastTime / 1000],
+      },
+      {
+        name: 'u_frame',
+        method: '1f',
+        value: [currentFrame],
+      },
+    ],
+  );
+}
+
+function init(action: ReturnType<typeof ActionCreators.init>) {
+  initView(action.payload);
 }
 
 function* createBuffer(action: ReturnType<typeof ActionCreators.createBuffer>) {
@@ -60,7 +76,8 @@ function* updateBufferRequest(action: ReturnType<typeof ActionCreators.updateBuf
       },
       [],
     );
-    getView().render();
+
+    render();
 
     yield put(ActionCreators.updateBuffer({
       name,
@@ -92,20 +109,52 @@ function* removeBuffer(action: ReturnType<typeof ActionCreators.removeBuffer>) {
   yield put(ActionCreators.setBuffers(newBuffers));
 }
 
-function* setOutputBuffer(action: ReturnType<typeof ActionCreators.setOutputBuffer>) {
+function setOutputBuffer(action: ReturnType<typeof ActionCreators.setOutputBuffer>) {
   getView().setBufferToOutput(action.payload);
-  getView().render();
+  render();
 }
 
-function* setBuffersOrder(action: ReturnType<typeof ActionCreators.setBuffersOrder>) {
+function setBuffersOrder(action: ReturnType<typeof ActionCreators.setBuffersOrder>) {
   getView().setBuffersOrder(action.payload);
 }
 
+let animationFrame: number;
+let startTime: number = null;
+let currentFrame: number = 0;
+let lastTime: number = 0;
+
+function toggleAnimation(action: ReturnType<typeof AnimationActionCreators.toggleAnimation>) {
+  cancelAnimationFrame(animationFrame);
+
+  if (action.payload) {
+    startTime = performance.now() - lastTime;
+
+    animationFrame = requestAnimationFrame(function anim () {
+      lastTime = performance.now() - startTime;
+
+      render();
+
+      currentFrame += 1;
+
+      animationFrame = requestAnimationFrame(anim);
+    });
+  }
+}
+
+function resetAnimation() {
+  currentFrame = 0;
+  lastTime = 0;
+  startTime = performance.now();
+  render();
+}
+
 export default function* rootSaga() {
-  yield takeEvery(ActionTypes.INIT, init);
-  yield takeEvery(ActionTypes.CREATE_BUFFER, createBuffer);
-  yield takeEvery(ActionTypes.REMOVE_BUFFER, removeBuffer);
-  yield takeEvery(ActionTypes.UPDATE_BUFFER_REQUEST, updateBufferRequest);
-  yield takeEvery(ActionTypes.SET_OUTPUT_BUFFER, setOutputBuffer);
-  yield takeEvery(ActionTypes.SET_BUFFERS_ORDER, setBuffersOrder);
+  yield takeEvery(CanvasViewActionTypes.INIT, init);
+  yield takeEvery(CanvasViewActionTypes.CREATE_BUFFER, createBuffer);
+  yield takeEvery(CanvasViewActionTypes.REMOVE_BUFFER, removeBuffer);
+  yield takeEvery(CanvasViewActionTypes.UPDATE_BUFFER_REQUEST, updateBufferRequest);
+  yield takeEvery(CanvasViewActionTypes.SET_OUTPUT_BUFFER, setOutputBuffer);
+  yield takeEvery(CanvasViewActionTypes.SET_BUFFERS_ORDER, setBuffersOrder);
+  yield takeEvery(AnimationActionTypes.TOGGLE_ANIMATION, toggleAnimation);
+  yield takeEvery(AnimationActionTypes.RESET_ANIMATION, resetAnimation);
 }
