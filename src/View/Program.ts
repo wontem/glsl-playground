@@ -2,19 +2,6 @@ import * as defaultShaders from './defaultShaders';
 import { getGLSLVersion } from './utils/getGLSLVersion';
 import { ViewEventType, ViewEvent, Uniform, Attribute, Resolution } from './models';
 
-const defaultProgramMap: WeakMap<WebGL2RenderingContext, WebGLProgram> = new WeakMap();
-
-function getDefaultProgram(gl: WebGL2RenderingContext): WebGLProgram {
-  if (defaultProgramMap.has(gl)) {
-    return defaultProgramMap.get(gl);
-  }
-
-  const program = createDefaultProgram(gl);
-  defaultProgramMap.set(gl, program);
-
-  return program;
-}
-
 function createDefaultProgram(gl: WebGL2RenderingContext) {
   const vertexSource = defaultShaders.getVertexShaderSource(300);
   const fragmentSource = defaultShaders.getFragmentShaderSource();
@@ -90,6 +77,26 @@ function createProgram(
 }
 
 export class Program {
+  private static defaultProgramMap: WeakMap<WebGL2RenderingContext, WebGLProgram> = new WeakMap();
+  private static getDefaultProgram(gl: WebGL2RenderingContext): WebGLProgram {
+    if (this.defaultProgramMap.has(gl)) {
+      return this.defaultProgramMap.get(gl);
+    }
+
+    const program = createDefaultProgram(gl);
+    this.defaultProgramMap.set(gl, program);
+
+    return program;
+  }
+
+  public static destroyDefaultProgram(gl: WebGL2RenderingContext): void {
+    if (this.defaultProgramMap.has(gl)) {
+      const program = this.defaultProgramMap.get(gl);
+      gl.deleteProgram(program);
+      this.defaultProgramMap.delete(gl);
+    }
+  }
+
   private program: WebGLProgram;
   private vao: WebGLVertexArrayObject;
   private fragmentSource: string;
@@ -99,7 +106,7 @@ export class Program {
     attributes: Attribute[],
   ) {
     this.fragmentSource = '';
-    this.program = getDefaultProgram(gl);
+    this.program = Program.getDefaultProgram(gl);
     this.vao = this.createVAO(attributes);
   }
 
@@ -132,7 +139,8 @@ export class Program {
       return false;
     }
 
-    this.gl[`uniform${method}`](location, ...value);
+    // TODO: fix typings
+    (this.gl as any)[`uniform${method}`](location, ...value);
 
     return true;
   }
@@ -170,7 +178,7 @@ export class Program {
     const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentSource, errors);
 
     if (!fragmentShader) {
-      return getDefaultProgram(gl);
+      return Program.getDefaultProgram(gl);
     }
 
     const version = getGLSLVersion(fragmentSource);
@@ -180,7 +188,7 @@ export class Program {
     gl.deleteShader(vertexShader);
     gl.deleteShader(fragmentShader);
 
-    return program || getDefaultProgram(gl);
+    return program || Program.getDefaultProgram(gl);
   }
 
   public update(fragmentSource: string): ViewEvent[] {
@@ -196,7 +204,7 @@ export class Program {
   }
 
   private destroyProgram(): void {
-    if (getDefaultProgram(this.gl) !== this.program) {
+    if (Program.getDefaultProgram(this.gl) !== this.program) {
       this.gl.deleteProgram(this.program);
     }
 

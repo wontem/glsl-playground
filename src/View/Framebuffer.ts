@@ -1,4 +1,4 @@
-import { Texture, getNewUnit } from './Texture';
+import { Texture } from './Texture';
 import { ReadonlyTexture, Resolution } from './models';
 
 class Framebuffer {
@@ -79,7 +79,7 @@ export class DoubleFramebuffer implements ReadonlyTexture {
   constructor(
     private gl: WebGL2RenderingContext,
     private resolution: Resolution = [1, 1],
-    private unit: number = getNewUnit(gl),
+    private unit: number = Texture.getNewUnit(gl),
   ) {
     const texture0 = new Texture(gl, resolution, this.unit);
     const texture1 = new Texture(gl, resolution, this.unit);

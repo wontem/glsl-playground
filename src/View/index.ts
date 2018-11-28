@@ -171,6 +171,11 @@ export class View {
   }
 
   public setBufferToOutput(bufferName: string): void {
+    if (!this.buffers.has(bufferName)) {
+      console.warn(`Buffer ${bufferName} doesn't exist`);
+      return;
+    }
+
     this.mainProgram.update(defaultShaders.getViewProgramFragmentShaderSource(bufferName));
     this.outputBufferName = bufferName;
   }
@@ -206,5 +211,29 @@ export class View {
 
   public getBufferSource(bufferName: string): string {
     return this.buffers.get(bufferName).program.getSource();
+  }
+
+  public destroy(): void {
+    this.buffersOrder = [];
+    this.buffers.forEach(({ output, program }) => {
+      output.destroy();
+      program.destroy();
+    });
+
+    this.buffers.clear();
+
+    this.textures.forEach((texture, key, textures) => {
+      texture.destroy();
+    });
+
+    this.textures.clear();
+
+    this.mainProgram.destroy();
+    this.mainProgram = null;
+
+    Texture.clearUnitLocks(this.gl);
+    Program.destroyDefaultProgram(this.gl);
+
+    this.gl = null;
   }
 }
