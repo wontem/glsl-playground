@@ -3,21 +3,21 @@ import { bindActionCreators } from 'redux';
 import { createStructuredSelector } from 'reselect';
 import { View as Component } from '../components/View';
 
-import { init } from '../actions/canvasView';
-import { toggleAnimation, resetAnimation } from '../actions/animation';
-import * as Selectors from '../selectors/animation';
+import * as CanvasViewSelectors from '../selectors/canvasView';
+import { setErrorsForBuffers } from '../actions/canvasView';
+import { DispatchProps, OwnProps, StateProps } from '../components/View.models';
 
 const mapStateToProps = createStructuredSelector({
-  isPlaying: Selectors.isPlaying,
+  buffers: CanvasViewSelectors.buffers,
+  buffersOrder: CanvasViewSelectors.buffersOrder,
+  outputBuffer: CanvasViewSelectors.outputBuffer,
 });
 
 const mapDispatchToProps = (dispatch: any) => bindActionCreators(
   {
-    init,
-    toggleAnimation,
-    resetAnimation,
+    onError: setErrorsForBuffers,
   },
   dispatch,
 );
 
-export default connect(mapStateToProps, mapDispatchToProps)(Component);
+export default connect<StateProps, DispatchProps, OwnProps, {}>(mapStateToProps, mapDispatchToProps)(Component);

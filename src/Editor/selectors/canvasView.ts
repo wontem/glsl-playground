@@ -7,6 +7,7 @@ export const buffers = (state: any) => canvasView(state).buffers;
 export const buffersOrder = (state: any) => canvasView(state).buffersOrder;
 export const currentBufferName = (state: any) => canvasView(state).currentBuffer;
 export const outputBuffer = (state: any) => canvasView(state).outputBuffer;
+export const errors = (state: any) => canvasView(state).errors;
 
 export const bufferNames = (state: any) => {
   const buffersList = buffers(state);
@@ -35,11 +36,12 @@ export const currentBuffer = (state: any) => {
 export const currentBufferSource = (state: any) => {
   const buffer = currentBuffer(state);
 
-  return buffer ? buffer.source : '';
+  return buffer || '';
 }
 
 export const currentBufferErrors = (state: any) => {
-  const buffer = currentBuffer(state);
+  const name = currentBufferName(state);
+  const allErrors = errors(state);
 
-  return buffer ? buffer.errors : [];
+  return allErrors[name] || [];
 }

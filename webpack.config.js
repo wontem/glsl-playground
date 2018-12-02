@@ -2,6 +2,7 @@ const path = require('path');
 const createStyledComponentsTransformer = require('typescript-plugin-styled-components').default;
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 // const WebpackNotifierPlugin = require('webpack-notifier');
+const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
 
 const styledComponentsTransformer = createStyledComponentsTransformer();
 
@@ -10,6 +11,12 @@ module.exports = {
   devtool: 'inline-source-map',
   entry: './src/Editor/index.tsx',
   module: {
+    defaultRules: [
+      {
+        type: "javascript/auto",
+        resolve: {}
+      }
+    ],
     rules: [
       {
         test: /\.tsx?$/,
@@ -26,6 +33,14 @@ module.exports = {
       {
         test: /\.(png|jpg|gif)$/,
         loader: 'file-loader',
+      },
+      {
+        test: /\.wasm$/,
+        loader: 'file-loader',
+      },
+      {
+        test: /\.tmLanguage$/,
+        loader: 'raw-loader',
       },
       {
         test: /\.css$/,
@@ -53,6 +68,9 @@ module.exports = {
   },
   plugins: [
     new HtmlWebpackPlugin(),
+    new MonacoWebpackPlugin({
+      languages: [],
+    }),
     // new WebpackNotifierPlugin(),
   ]
 };

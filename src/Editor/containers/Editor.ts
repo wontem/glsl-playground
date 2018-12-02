@@ -5,6 +5,7 @@ import { Editor as Component } from '../components/Editor';
 
 import * as ActionCreators from '../actions/canvasView';
 import * as Selectors from '../selectors/canvasView';
+import { DispatchProps, OwnProps, StateProps } from '../components/Editor.models';
 
 const mapStateToProps = createStructuredSelector({
   name: Selectors.currentBufferName,
@@ -14,9 +15,9 @@ const mapStateToProps = createStructuredSelector({
 
 const mapDispatchToProps = (dispatch: any) => bindActionCreators(
   {
-    onChange: ActionCreators.updateBufferRequest,
+    onChange: ActionCreators.updateBuffer,
   },
   dispatch,
 );
 
-export default connect(mapStateToProps, mapDispatchToProps)(Component);
+export default connect<StateProps, DispatchProps, OwnProps, {}>(mapStateToProps, mapDispatchToProps)(Component);

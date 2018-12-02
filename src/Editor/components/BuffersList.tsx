@@ -3,17 +3,7 @@ import styled from 'styled-components';
 
 import * as ActionCreators from '../actions/canvasView';
 import { Point } from './Point';
-
-interface BuffersListProps {
-  bufferNames: string[];
-  outputBuffer: string;
-  selectedBuffer: string;
-  buffersOrder: string[];
-  createBuffer: typeof ActionCreators.createBuffer;
-  selectBuffer: typeof ActionCreators.selectBuffer;
-  setOutputBuffer: typeof ActionCreators.setOutputBuffer;
-  removeBuffer: typeof ActionCreators.removeBuffer;
-}
+import { Props } from './BuffersList.models';
 
 interface BuffersListItemProps {
   isOutputBuffer: boolean;
@@ -21,7 +11,7 @@ interface BuffersListItemProps {
   bufferName: string;
   selectBuffer: typeof ActionCreators.selectBuffer;
   setOutputBuffer: typeof ActionCreators.setOutputBuffer;
-  removeBuffer: typeof ActionCreators.removeBuffer;
+  removeBuffer: (name: string) => void;
   className?: string;
 }
 
@@ -121,7 +111,7 @@ class Order extends React.Component<{ items: string[] }> {
   }
 }
 
-export class BuffersList extends React.Component<BuffersListProps> {
+export class BuffersList extends React.Component<Props> {
   render() {
     const listItems = this.props.bufferNames.map((bufferName) => {
       return (

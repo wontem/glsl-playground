@@ -4,17 +4,12 @@ import { ActionTypes } from '../actionTypes/canvasView';
 import * as ActionCreators from '../actions/canvasView';
 import { parseLogs } from '../../View/utils/parseLogs';
 
-export interface BufferInfo {
-  source: string;
-  name: string;
-  errors: ReturnType<typeof parseLogs>;
-}
-
 export interface State {
-  buffers: Record<string, BufferInfo>;
+  buffers: Record<string, string>;
   currentBuffer: string;
   outputBuffer: string;
   buffersOrder: string[];
+  errors: Record<string, ReturnType<typeof parseLogs>>;
 }
 
 const initialState: State = {
@@ -22,6 +17,7 @@ const initialState: State = {
   buffersOrder: [],
   currentBuffer: '',
   outputBuffer: '',
+  errors: {},
 };
 
 export const canvasView = handleActions<State, any>(
@@ -50,15 +46,10 @@ export const canvasView = handleActions<State, any>(
         buffersOrder: action.payload,
       };
     },
-    [ActionTypes.UPDATE_BUFFER]: (state, action: ReturnType<typeof ActionCreators.updateBuffer>): State => {
-      const bufferInfo = action.payload;
-
+    [ActionTypes.SET_ERRORS]: (state, action: ReturnType<typeof ActionCreators.setErrors>): State => {
       return {
         ...state,
-        buffers: {
-          ...state.buffers,
-          [bufferInfo.name]: bufferInfo,
-        },
+        errors: action.payload,
       };
     },
   },

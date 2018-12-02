@@ -1,10 +1,11 @@
-import { connect, MapDispatchToProps, MapDispatchToPropsFunction } from 'react-redux';
-import { bindActionCreators } from 'redux';
+import { connect } from 'react-redux';
+import { bindActionCreators, Dispatch, AnyAction } from 'redux';
 import { createStructuredSelector } from 'reselect';
 import { BuffersList as Component } from '../components/BuffersList';
 
 import * as ActionCreators from '../actions/canvasView';
 import * as Selectors from '../selectors/canvasView';
+import { DispatchProps, OwnProps, StateProps } from '../components/BuffersList.models';
 
 const mapStateToProps = createStructuredSelector({
   bufferNames: Selectors.bufferNames,
@@ -13,7 +14,7 @@ const mapStateToProps = createStructuredSelector({
   buffersOrder: Selectors.buffersOrder,
 });
 
-const mapDispatchToProps = (dispatch: any) => bindActionCreators(
+const mapDispatchToProps = (dispatch: Dispatch<AnyAction>) => bindActionCreators(
   {
     createBuffer: ActionCreators.createBuffer,
     selectBuffer: ActionCreators.selectBuffer,
@@ -23,4 +24,4 @@ const mapDispatchToProps = (dispatch: any) => bindActionCreators(
   dispatch,
 );
 
-export default connect(mapStateToProps, mapDispatchToProps)(Component);
+export default connect<StateProps, DispatchProps, OwnProps, {}>(mapStateToProps, mapDispatchToProps)(Component);

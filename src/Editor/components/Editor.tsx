@@ -1,48 +1,42 @@
-import { LineWidget } from 'codemirror';
 import * as React from 'react';
-import * as ReactDOM from 'react-dom';
+import { loadWASM } from 'onigasm';
+import { Registry } from 'monaco-textmate'; // peer dependency
+import { wireTmGrammars } from 'monaco-editor-textmate';
+import onigasmAsm from 'onigasm/lib/onigasm.wasm';
+import glslLanguage from './glsl.tmLanguage';
+
 import styled from 'styled-components';
-import { Controlled as CodeMirror, ICodeMirror, IInstance } from 'react-codemirror2';
+import MonacoEditor, { EditorWillMount, EditorDidMount } from 'react-monaco-editor';
 
-import { updateBufferRequest } from '../actions/canvasView';
-import { BufferInfo } from '../reducers/canvasView';
+import { Props, State } from './Editor.models';
+import { editor } from 'monaco-editor';
 
-import 'codemirror/lib/codemirror.css';
-import 'codemirror/mode/clike/clike';
-import 'codemirror/keymap/sublime';
-
-
-const CM = styled(CodeMirror)`
-  display: flex;
-  flex-direction: column;
+const Container = styled.div`
+  height: 0;
   flex-grow: 1;
-  height: 100%;
-
-  & > div {
-    flex-grow: 1;
-    font-family: 'Fira Code', Menlo, Monaco, 'Courier New', monospace;
-    font-size: 13px;
-    line-height: 20px;
-  }
 `;
 
-interface Props extends BufferInfo {
-  onChange: typeof updateBufferRequest;
-}
+const List = styled.ul`
+  max-height: 100px;
+  overflow-y: auto;
+  font-family: "Fira Code", Menlo, Monaco, "Courier New", monospace;
+  font-size: 13px;
+  line-height: 16px;
+`;
 
-interface State {
-  value: string;
-}
-
-const Line = styled.div`
+const Line = styled.li`
   display: flex;
+  cursor: pointer;
+
+  &:nth-child(2n + 1) {
+    background: rgba(0, 0, 0, .1);
+  }
 
   & > div {
-    padding: 0px 4px;
-    color: white;
+    padding: 0px 8px;
 
     &:nth-child(1) {
-      background: maroon;
+      background: rgba(0, 0, 0, .1);
       width: 100px;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -51,92 +45,92 @@ const Line = styled.div`
     }
 
     &:nth-child(2) {
-      background: red;
       flex-grow: 1;
     }
   }
 `
 
-const ErrorLine = (props: any) => (
-  <Line>
+const ErrorLine = (props: {
+  line: number;
+  item: string;
+  message: string;
+  onClick: (line: number) => void;
+}) => (
+  <Line onClick={() => {
+    props.onClick(props.line);
+  }}>
     <div>{props.item}</div>
     <div>{props.message}</div>
   </Line>
 );
 
-
 export class Editor extends React.Component<Props, State> {
-  private instance: IInstance;
-  private widgets: [HTMLElement, LineWidget][];
+  private editor: editor.IStandaloneCodeEditor;
 
-  constructor(props: Props) {
-    super(props);
+  editorWillMount: EditorWillMount = async (monaco) => {
+    await loadWASM(onigasmAsm); // See https://www.npmjs.com/package/onigasm#light-it-up
 
-    this.instance = null;
-    this.widgets = [];
+    const registry = new Registry({
+      getGrammarDefinition: async (scopeName) => {
+        if (scopeName === 'source.glsl') {
+          return {
+            format: 'plist',
+            content: glslLanguage,
+          }
+        }
 
-    this.state = {
-      value: props.source,
-    };
-  }
-
-  private clearWidgets() {
-    this.instance.operation(() => {
-      this.widgets.forEach(([node, widget]) => {
-        ReactDOM.unmountComponentAtNode(node);
-        widget.clear();
-      });
+        return null;
+      }
     });
 
-    this.widgets = [];
+    // map of monaco "language id's" to TextMate scopeNames
+    const grammars = new Map();
+    grammars.set('plaintext', 'source.glsl');
+
+    await wireTmGrammars(monaco, registry, grammars);
   }
 
-  private onChange: ICodeMirror['onChange'] = (editor, data, value) => {
-    this.props.onChange(this.props.name, value);
-  }
-
-  componentDidUpdate(prevProps: Props) {
-    if (this.props.source !== prevProps.source) {
-      this.setState({
-        value: this.props.source,
-      }, () => {
-        this.clearWidgets();
-        this.props.errors.forEach((log) => {
-          const line = document.createElement('div');
-
-          ReactDOM.render(<ErrorLine item={log.item} message={log.message} />, line);
-
-          const widget = this.instance.addLineWidget(log.line - 1, line, {
-            coverGutter: false,
-            noHScroll: true,
-            // above: true,
-          });
-
-          this.widgets.push([line, widget]);
-        });
-      });
-    }
+  editorDidMount: EditorDidMount = (editor) => {
+    this.editor = editor;
   }
 
   render() {
     return (
-      <CM
-        value={this.state.value}
-        onChange={this.onChange}
-        options={{
-          mode: 'x-shader/x-fragment',
-          lineNumbers: true,
-          keyMap: 'sublime',
-          viewportMargin: Infinity,
-          readOnly: !this.props.name,
-        }}
-        onBeforeChange={(editor, data, value) => {
-          this.setState({ value });
-        }}
-        editorDidMount={(editor) => {
-          this.instance = editor;
-        }}
-      />
+      <React.Fragment>
+        <Container>
+          <MonacoEditor
+            language='plaintext'
+            options={{
+              automaticLayout: true,
+              fontFamily: '"Fira Code", Menlo, Monaco, "Courier New", monospace',
+              scrollBeyondLastLine: false,
+            }}
+            value={this.props.source}
+            onChange={(value) => this.props.onChange(this.props.name, value)}
+            editorWillMount={this.editorWillMount}
+            editorDidMount={this.editorDidMount}
+          />
+        </Container>
+        <List>
+          {this.props.errors.map((value) => {
+            return (
+              <ErrorLine
+                key={value.fullMessage}
+                item={value.item}
+                message={value.message}
+                line={value.line}
+                onClick={(lineNumber) => {
+                  this.editor.revealLineInCenter(lineNumber);
+                  this.editor.setPosition({
+                    lineNumber,
+                    column: 0,
+                  })
+                }}
+              />
+            );
+          })}
+        </List>
+      </React.Fragment>
     );
   }
 }

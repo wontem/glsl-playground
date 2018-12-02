@@ -96,15 +96,15 @@
   resolved "https://registry.yarnpkg.com/@sindresorhus/is/-/is-0.7.0.tgz#9a06f4f137ee84d7df0460c1fdb1135ffa6c50fd"
   integrity sha512-ONhaKPIufzzrlNbqtWFFd+jlnemX6lJAgq9ZeiZtS7I1PIf/la7CW4m83rTXRnVnsMbW2k56pGYu7AUFJD9Pow==
 
+"@types/anymatch@*":
+  version "1.3.0"
+  resolved "https://registry.yarnpkg.com/@types/anymatch/-/anymatch-1.3.0.tgz#d1d55958d1fccc5527d4aba29fc9c4b942f563ff"
+  integrity sha512-7WcbyctkE8GTzogDb0ulRAEw7v8oIS54ft9mQTU7PfM0hp5e+8kpa+HeQ7IQrFbKtJXBKcZ4bh+Em9dTw5L6AQ==
+
 "@types/classnames@^2.2.6":
   version "2.2.6"
   resolved "https://registry.yarnpkg.com/@types/classnames/-/classnames-2.2.6.tgz#dbe8a666156d556ed018e15a4c65f08937c3f628"
   integrity sha512-XHcYvVdbtAxVstjKxuULYqYaWIzHR15yr1pZj4fnGChuBVJlIAp9StJna0ZJNSgxPh4Nac2FL4JM3M11Tm6fqQ==
-
-"@types/codemirror@^0.0.69":
-  version "0.0.69"
-  resolved "https://registry.yarnpkg.com/@types/codemirror/-/codemirror-0.0.69.tgz#a40ead562be9173dc18c0816c7f54c1fc272f937"
-  integrity sha512-NtAjeJ5vqEry4w/UtKrpbPf/yViBCGB0MYTKk8/GKEEBEc8p592dg28UzDBFtUpw1+F002crt15w5hZo0zHgFw==
 
 "@types/node@*":
   version "10.12.10"
@@ -159,10 +159,33 @@
     "@types/react" "*"
     csstype "^2.2.0"
 
+"@types/tapable@*":
+  version "1.0.4"
+  resolved "https://registry.yarnpkg.com/@types/tapable/-/tapable-1.0.4.tgz#b4ffc7dc97b498c969b360a41eee247f82616370"
+  integrity sha512-78AdXtlhpCHT0K3EytMpn4JNxaf5tbqbLcbIRoQIHzpTIyjpxLQKRoxU55ujBXAtg3Nl2h/XWvfDa9dsMOd0pQ==
+
+"@types/uglify-js@*":
+  version "3.0.4"
+  resolved "https://registry.yarnpkg.com/@types/uglify-js/-/uglify-js-3.0.4.tgz#96beae23df6f561862a830b4288a49e86baac082"
+  integrity sha512-SudIN9TRJ+v8g5pTG8RRCqfqTMNqgWCKKd3vtynhGzkIIjxaicNAMuY5TRadJ6tzDu3Dotf3ngaMILtmOdmWEQ==
+  dependencies:
+    source-map "^0.6.1"
+
 "@types/webgl2@^0.0.4":
   version "0.0.4"
   resolved "https://registry.yarnpkg.com/@types/webgl2/-/webgl2-0.0.4.tgz#c3b0f9d6b465c66138e84e64cb3bdf8373c2c279"
   integrity sha512-PACt1xdErJbMUOUweSrbVM7gSIYm1vTncW2hF6Os/EeWi6TXYAYMPp+8v6rzHmypE5gHrxaxZNXgMkJVIdZpHw==
+
+"@types/webpack@^4.4.19":
+  version "4.4.19"
+  resolved "https://registry.yarnpkg.com/@types/webpack/-/webpack-4.4.19.tgz#6019c1825af582219011eaa6cdc179f2d57835f0"
+  integrity sha512-vO/PuQ9iF9Gy8spN8RUUjt5reu9Z+Tb7iWxeAopCmXaIZaIsOgtY5U6UE2ELlcRUBO1HbNWhy+lQE9G92IJcmQ==
+  dependencies:
+    "@types/anymatch" "*"
+    "@types/node" "*"
+    "@types/tapable" "*"
+    "@types/uglify-js" "*"
+    source-map "^0.6.0"
 
 "@webassemblyjs/ast@1.7.11":
   version "1.7.11"
@@ -965,11 +988,6 @@ code-point-at@^1.0.0:
   resolved "https://registry.yarnpkg.com/code-point-at/-/code-point-at-1.1.0.tgz#0d070b4d043a5bea33a2f1a40e2edb3d9a4ccf77"
   integrity sha1-DQcLTQQ6W+ozovGkDi7bPZpMz3c=
 
-codemirror@^5.41.0:
-  version "5.41.0"
-  resolved "https://registry.yarnpkg.com/codemirror/-/codemirror-5.41.0.tgz#57e245be197643c39440d2840236d3edc4bb1162"
-  integrity sha512-mkCwbneCx2WHg1MNCYrI+8Zuq0KMMaZ5yTFpQlAZazy3yxME8bHcuSc9WUFzgPZ114WqWu1FIHlx8CavLzBDIg==
-
 collection-visit@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/collection-visit/-/collection-visit-1.0.0.tgz#4bc0373c164bc3291b4d368c829cf1a80a59dca0"
@@ -1757,6 +1775,11 @@ fast-json-stable-stringify@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/fast-json-stable-stringify/-/fast-json-stable-stringify-2.0.0.tgz#d5142c0caee6b1189f87d3a76111064f86c8bbf2"
   integrity sha1-1RQsDK7msRifh9OnYREGT4bIu/I=
+
+fast-plist@^0.1.2:
+  version "0.1.2"
+  resolved "https://registry.yarnpkg.com/fast-plist/-/fast-plist-0.1.2.tgz#a45aff345196006d406ca6cdcd05f69051ef35b8"
+  integrity sha1-pFr/NFGWAG1AbKbNzQX2kFHvNbg=
 
 fastparse@^1.1.1:
   version "1.1.2"
@@ -3047,6 +3070,30 @@ mkdirp@^0.5.0, mkdirp@^0.5.1, mkdirp@~0.5.0:
   dependencies:
     minimist "0.0.8"
 
+monaco-editor-textmate@^2.0.1:
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/monaco-editor-textmate/-/monaco-editor-textmate-2.0.1.tgz#f33b4ddd89e0e47d6e364c7e1772bb7ea0c99c9f"
+  integrity sha512-0xFYTKtn5bSIVheegKpsqiPN/sxEX2ddGf876hSSFiOt/YIKIDt6ULFDmJGVIz4Mog3XqCY3++dFUgVqamjScg==
+
+monaco-editor-webpack-plugin@^1.7.0:
+  version "1.7.0"
+  resolved "https://registry.yarnpkg.com/monaco-editor-webpack-plugin/-/monaco-editor-webpack-plugin-1.7.0.tgz#920cbeecca25f15d70d568a7e11b0ba4daf1ae83"
+  integrity sha512-oItymcnlL14Sjd7EF7q+CMhucfwR/2BxsqrXIBrWL6LQplFfAfV+grLEQRmVHeGSBZ/Gk9ptzfueXnWcoEcFuA==
+  dependencies:
+    "@types/webpack" "^4.4.19"
+
+monaco-editor@^0.15.1, monaco-editor@^0.15.6:
+  version "0.15.6"
+  resolved "https://registry.yarnpkg.com/monaco-editor/-/monaco-editor-0.15.6.tgz#d63b3b06f86f803464f003b252627c3eb4a09483"
+  integrity sha512-JoU9V9k6KqT9R9Tiw1RTU8ohZ+Xnf9DMg6Ktqqw5hILumwmq7xqa/KLXw513uTUsWbhtnHoSJYYR++u3pkyxJg==
+
+monaco-textmate@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/monaco-textmate/-/monaco-textmate-3.0.0.tgz#abfbce7d7ff000954ae3206e512f325db6e7b8a8"
+  integrity sha512-llE/NasQkbAEDx/RPp0ili5ZEXH4e/UkYFMACvJrEY0aybq6FVW9qySt5C4kWwRXCJDL+4ewgoTt4XO3M+bfIg==
+  dependencies:
+    fast-plist "^0.1.2"
+
 move-concurrently@^1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/move-concurrently/-/move-concurrently-1.0.1.tgz#be2c005fda32e0b29af1f05d7c4b33214c701f92"
@@ -3364,6 +3411,13 @@ once@^1.3.0, once@^1.3.1, once@^1.4.0:
   integrity sha1-WDsap3WWHUsROsF9nFC6753Xa9E=
   dependencies:
     wrappy "1"
+
+onigasm@^2.2.1:
+  version "2.2.1"
+  resolved "https://registry.yarnpkg.com/onigasm/-/onigasm-2.2.1.tgz#d56da809d63d3bb25510e8b8e447ffe98e56bebb"
+  integrity sha512-pa361CpVfsWOk0MQ1jLuJ1GvEJMHEHgZmaBpOIfBbvbp2crkDHacXB6mA4vgEfO7fL0OEMUSuZjX0Q9yTx6jTg==
+  dependencies:
+    lru-cache "^4.1.1"
 
 only@~0.0.2:
   version "0.0.2"
@@ -3804,11 +3858,6 @@ rc@^1.0.1, rc@^1.1.6, rc@^1.2.7:
     minimist "^1.2.0"
     strip-json-comments "~2.0.1"
 
-react-codemirror2@^5.1.0:
-  version "5.1.0"
-  resolved "https://registry.yarnpkg.com/react-codemirror2/-/react-codemirror2-5.1.0.tgz#62de4460178adea40eb52eabf7491669bf3794b8"
-  integrity sha512-Cksbgbviuf2mJfMyrKmcu7ycK6zX/ukuQO8dvRZdFWqATf5joalhjFc6etnBdGCcPA2LbhIwz+OPnQxLN/j1Fw==
-
 react-dom@^16.6.3:
   version "16.6.3"
   resolved "https://registry.yarnpkg.com/react-dom/-/react-dom-16.6.3.tgz#8fa7ba6883c85211b8da2d0efeffc9d3825cccc0"
@@ -3828,6 +3877,15 @@ react-lifecycles-compat@^3.0.0:
   version "3.0.4"
   resolved "https://registry.yarnpkg.com/react-lifecycles-compat/-/react-lifecycles-compat-3.0.4.tgz#4f1a273afdfc8f3488a8c516bfda78f872352362"
   integrity sha512-fBASbA6LnOU9dOU2eW7aQ8xmYBSXUIWr+UmF9b1efZBazGNO+rcXT/icdKnYm2pTwcRylVUYwW7H1PHfLekVzA==
+
+react-monaco-editor@^0.22.0:
+  version "0.22.0"
+  resolved "https://registry.yarnpkg.com/react-monaco-editor/-/react-monaco-editor-0.22.0.tgz#2ba4c9557d2e95bb0f097a56f5e5d30598f7f2f9"
+  integrity sha512-SdkfmdbHNzKLd33w98Wxm1MvvGC7sKqdxb79ij6XnYV5WH2zgL5BgJ2FCo/ZDh/JZgUp1mXGt8NjTcbLJVhqVw==
+  dependencies:
+    "@types/react" "*"
+    monaco-editor "^0.15.1"
+    prop-types "^15.6.2"
 
 react-redux@^5.1.1:
   version "5.1.1"
@@ -3929,6 +3987,11 @@ redux-saga@^0.16.2:
   version "0.16.2"
   resolved "https://registry.yarnpkg.com/redux-saga/-/redux-saga-0.16.2.tgz#993662e86bc945d8509ac2b8daba3a8c615cc971"
   integrity sha512-iIjKnRThI5sKPEASpUvySemjzwqwI13e3qP7oLub+FycCRDysLSAOwt958niZW6LhxfmS6Qm1BzbU70w/Koc4w==
+
+redux-thunk@^2.3.0:
+  version "2.3.0"
+  resolved "https://registry.yarnpkg.com/redux-thunk/-/redux-thunk-2.3.0.tgz#51c2c19a185ed5187aaa9a2d08b666d0d6467622"
+  integrity sha512-km6dclyFnmcvxhAcrQV2AkZmPQjzPDjgVlQtR0EQjxZPyJ0BnMf3in1ryuR8A2qU0HldVRfxYXbFSKlI3N7Slw==
 
 redux@^4.0.0, redux@^4.0.1:
   version "4.0.1"
@@ -4297,7 +4360,7 @@ source-map@^0.5.6:
   resolved "https://registry.yarnpkg.com/source-map/-/source-map-0.5.7.tgz#8a039d2d1021d22d1ea14c80d8ea468ba2ef3fcc"
   integrity sha1-igOdLRAh0i0eoUyA2OpGi6LvP8w=
 
-source-map@^0.6.1, source-map@~0.6.0, source-map@~0.6.1:
+source-map@^0.6.0, source-map@^0.6.1, source-map@~0.6.0, source-map@~0.6.1:
   version "0.6.1"
   resolved "https://registry.yarnpkg.com/source-map/-/source-map-0.6.1.tgz#74722af32e9614e9c287a8d0bbde48b5e2f1a263"
   integrity sha512-UjgapumWlbMhkBgzT7Ykc5YXUT46F0iKu8SGXq0bcwP5dz/h0Plj6enJqjz1Zbq2l5WaqYnrVbwWOWMyF3F47g==
