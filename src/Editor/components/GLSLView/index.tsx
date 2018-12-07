@@ -1,24 +1,44 @@
 import * as React from 'react';
 import { View } from '../../../View';
-import { ViewEvent, Uniform } from '../../../View/models';
+import { ViewEvent, Uniform, TextureState, TextureUpdate } from '../../../View/models';
+
+async function getImage(src: string): Promise<HTMLImageElement> {
+  return new Promise<HTMLImageElement>((resolve, reject) => {
+    const image = document.createElement('img');
+    image.addEventListener('load', function load() {
+      image.removeEventListener('load', load);
+
+      resolve(image);
+    });
+    image.crossOrigin = 'anonymous';
+    image.src = src;
+  });
+}
+
+interface _Texture extends TextureState {
+  src: string;
+}
+
+// TODO: shouldn't be partial
+export type Texture = Partial<_Texture>;
 
 interface GLSLViewProps {
+  className?: string;
+  pixelRatio: number;
   buffers: Record<string, string>;
   buffersOrder: string[];
   outputBuffer: string;
   width: number;
   height: number;
-  onError: (errors: UpdateError[]) => void;
-
-  // TODO: implement
-  textures: {};
   uniforms: Uniform[];
+  textures: Record<string, Texture>;
+  onError: (errors: UpdateError[]) => void;
 }
 
 interface DiffCallbacks<K, V> {
   create: (key: K, value: V) => void;
-  update: (key: K, value: V) => void;
-  delete: (key: K) => void;
+  update: (key: K, value: V, prevValue: V) => void;
+  delete: (key: K, value: V) => void;
 }
 
 function diffObjects<T>(
@@ -38,11 +58,11 @@ function diffObjects<T>(
     if (key in objectA) {
       if (key in objectB) {
         if (objectA[key] !== objectB[key]) {
-          callbacks.update(key, objectB[key]);
+          callbacks.update(key, objectB[key], objectA[key]);
           isChanged = true;
         }
       } else {
-        callbacks.delete(key);
+        callbacks.delete(key, objectA[key]);
         isChanged = true;
       }
     } else {
@@ -63,6 +83,14 @@ export class GLSLView extends React.PureComponent<GLSLViewProps> {
   private canvas: React.RefObject<HTMLCanvasElement>;
   private view: View;
 
+  getCanvas() {
+    return this.canvas.current;
+  }
+
+  getView() {
+    return this.view;
+  }
+
   constructor(props: GLSLViewProps) {
     super(props);
 
@@ -75,7 +103,7 @@ export class GLSLView extends React.PureComponent<GLSLViewProps> {
   ): boolean {
     let errors: UpdateError[] = [];
 
-    const isUpdated = diffObjects(prevBuffers, currentBuffers, {
+    const isChanged = diffObjects(prevBuffers, currentBuffers, {
       create: (name, source) => {
         this.view.createBuffer(name);
         const updateErrors = this.view.updateBuffer(name, source);
@@ -94,11 +122,62 @@ export class GLSLView extends React.PureComponent<GLSLViewProps> {
       this.props.onError(errors);
     }
 
-    return isUpdated;
+    return isChanged;
+  }
+
+  private updateTextures(
+    prevTextures: Record<string, Texture>,
+    currentTextures: Record<string, Texture>,
+  ): boolean {
+    const isChanged = diffObjects(prevTextures, currentTextures, {
+      create: async (name, texture) => {
+        this.view.createTexture(name);
+
+        const { src, ...textureState } = texture;
+        const image = await getImage(src);
+
+        this.view.updateTexture(name, {
+          source: image,
+          resolution: [image.width, image.height],
+          ...textureState,
+        });
+
+        // TODO: remove it
+        this.view.render();
+      },
+      update: async (name, texture, oldTexture) => {
+        const { src, ...textureState } = texture;
+        let updates: Partial<TextureUpdate> = textureState;
+
+        if (texture.src !== oldTexture.src) {
+          const image = await getImage(src);
+
+          updates = {
+            source: image,
+            resolution: [image.width, image.height],
+            ...textureState,
+          }
+        }
+
+        this.view.updateTexture(name, updates);
+        // TODO: remove it
+        this.view.render();
+      },
+      delete: (name) => {
+        this.view.removeTexture(name);
+        // TODO: remove it
+        this.view.render();
+      },
+    });
+
+    return isChanged;
   }
 
   componentDidUpdate(prevProps: GLSLViewProps) {
-    let isChanged = this.updateBuffers(prevProps.buffers, this.props.buffers);
+    let isChanged = false;
+
+    isChanged = isChanged || this.updateBuffers(prevProps.buffers, this.props.buffers);
+    isChanged = isChanged || this.updateTextures(prevProps.textures, this.props.textures);
 
     if (prevProps.outputBuffer !== this.props.outputBuffer) {
       this.view.setBufferToOutput(this.props.outputBuffer);
@@ -112,9 +191,10 @@ export class GLSLView extends React.PureComponent<GLSLViewProps> {
 
     if (
       prevProps.width !== this.props.width ||
-      prevProps.height !== this.props.height
+      prevProps.height !== this.props.height ||
+      prevProps.pixelRatio !== this.props.pixelRatio
     ) {
-      this.view.resize(this.props.width, this.props.height);
+      this.resize(this.props.width, this.props.height, this.props.pixelRatio);
       isChanged = true;
     }
 
@@ -127,9 +207,16 @@ export class GLSLView extends React.PureComponent<GLSLViewProps> {
     }
   }
 
+  resize(width: number, height: number, pixelRatio: number): void {
+    this.view.resize(
+      width * pixelRatio,
+      height * pixelRatio
+    );
+  }
+
   componentDidMount() {
     this.view = new View(this.canvas.current.getContext('webgl2') as WebGL2RenderingContext);
-    this.view.resize(this.props.width, this.props.height);
+    this.resize(this.props.width, this.props.height, this.props.pixelRatio);
   }
 
   componentWillUnmount() {
@@ -139,7 +226,10 @@ export class GLSLView extends React.PureComponent<GLSLViewProps> {
 
   render() {
     return (
-      <canvas ref={this.canvas} />
+      <canvas
+        className={this.props.className}
+        ref={this.canvas}
+      />
     );
   }
 }

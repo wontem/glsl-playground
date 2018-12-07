@@ -2,9 +2,9 @@ import * as React from 'react';
 import styled, { createGlobalStyle } from 'styled-components';
 import 'reset-css';
 
-import BuffersList from '../containers/BuffersList';
 import Editor from '../containers/Editor';
 import View from '../containers/View';
+import { TabsPanel } from './TabsPanel';
 
 const GlobalStyle = createGlobalStyle`
   html, body, #root {
@@ -12,6 +12,7 @@ const GlobalStyle = createGlobalStyle`
     width: 100%;
     height: 100%;
     overflow: hidden;
+    font-family: "Fira Code", Menlo, Monaco, "Courier New", monospace;
   }
 `;
 
@@ -51,7 +52,7 @@ export class App extends React.Component {
         </LeftColumn>
         <RightColumn>
           <View />
-          <BuffersList />
+          <TabsPanel />
         </RightColumn>
         <GlobalStyle />
       </Panel>

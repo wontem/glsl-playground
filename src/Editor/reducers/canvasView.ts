@@ -3,9 +3,11 @@ import { handleActions } from 'redux-actions';
 import { ActionTypes } from '../actionTypes/canvasView';
 import * as ActionCreators from '../actions/canvasView';
 import { parseLogs } from '../../View/utils/parseLogs';
+import { Texture } from '../components/GLSLView';
 
 export interface State {
   buffers: Record<string, string>;
+  textures: Record<string, Texture>;
   currentBuffer: string;
   outputBuffer: string;
   buffersOrder: string[];
@@ -14,6 +16,7 @@ export interface State {
 
 const initialState: State = {
   buffers: {},
+  textures: {},
   buffersOrder: [],
   currentBuffer: '',
   outputBuffer: '',
@@ -26,6 +29,12 @@ export const canvasView = handleActions<State, any>(
       return {
         ...state,
         buffers: action.payload,
+      };
+    },
+    [ActionTypes.SET_TEXTURES]: (state, action: ReturnType<typeof ActionCreators.setTextures>): State => {
+      return {
+        ...state,
+        textures: action.payload,
       };
     },
     [ActionTypes.SELECT_BUFFER]: (state, action: ReturnType<typeof ActionCreators.selectBuffer>): State => {

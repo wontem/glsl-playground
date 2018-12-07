@@ -1,9 +1,9 @@
 import * as React from 'react';
-import { loadWASM } from 'onigasm';
-import { Registry } from 'monaco-textmate'; // peer dependency
-import { wireTmGrammars } from 'monaco-editor-textmate';
-import onigasmAsm from 'onigasm/lib/onigasm.wasm';
-import glslLanguage from './glsl.tmLanguage';
+// import { loadWASM } from 'onigasm';
+// import { Registry } from 'monaco-textmate'; // peer dependency
+// import { wireTmGrammars } from 'monaco-editor-textmate';
+// import onigasmAsm from 'onigasm/lib/onigasm.wasm';
+// import glslLanguage from './glsl.tmLanguage';
 
 import styled from 'styled-components';
 import MonacoEditor, { EditorWillMount, EditorDidMount } from 'react-monaco-editor';
@@ -19,7 +19,6 @@ const Container = styled.div`
 const List = styled.ul`
   max-height: 100px;
   overflow-y: auto;
-  font-family: "Fira Code", Menlo, Monaco, "Courier New", monospace;
   font-size: 13px;
   line-height: 16px;
 `;
@@ -68,26 +67,26 @@ export class Editor extends React.Component<Props, State> {
   private editor: editor.IStandaloneCodeEditor;
 
   editorWillMount: EditorWillMount = async (monaco) => {
-    await loadWASM(onigasmAsm); // See https://www.npmjs.com/package/onigasm#light-it-up
+    // await loadWASM(onigasmAsm); // See https://www.npmjs.com/package/onigasm#light-it-up
 
-    const registry = new Registry({
-      getGrammarDefinition: async (scopeName) => {
-        if (scopeName === 'source.glsl') {
-          return {
-            format: 'plist',
-            content: glslLanguage,
-          }
-        }
+    // const registry = new Registry({
+    //   getGrammarDefinition: async (scopeName) => {
+    //     if (scopeName === 'source.glsl') {
+    //       return {
+    //         format: 'plist',
+    //         content: glslLanguage,
+    //       }
+    //     }
 
-        return null;
-      }
-    });
+    //     return null;
+    //   }
+    // });
 
-    // map of monaco "language id's" to TextMate scopeNames
-    const grammars = new Map();
-    grammars.set('plaintext', 'source.glsl');
+    // // map of monaco "language id's" to TextMate scopeNames
+    // const grammars = new Map();
+    // grammars.set('plaintext', 'source.glsl');
 
-    await wireTmGrammars(monaco, registry, grammars);
+    // await wireTmGrammars(monaco, registry, grammars);
   }
 
   editorDidMount: EditorDidMount = (editor) => {
@@ -104,6 +103,7 @@ export class Editor extends React.Component<Props, State> {
               automaticLayout: true,
               fontFamily: '"Fira Code", Menlo, Monaco, "Courier New", monospace',
               scrollBeyondLastLine: false,
+              readOnly: !this.props.name,
             }}
             value={this.props.source}
             onChange={(value) => this.props.onChange(this.props.name, value)}
@@ -112,10 +112,10 @@ export class Editor extends React.Component<Props, State> {
           />
         </Container>
         <List>
-          {this.props.errors.map((value) => {
+          {this.props.errors.map((value, index) => {
             return (
               <ErrorLine
-                key={value.fullMessage}
+                key={index}
                 item={value.item}
                 message={value.message}
                 line={value.line}
@@ -124,7 +124,8 @@ export class Editor extends React.Component<Props, State> {
                   this.editor.setPosition({
                     lineNumber,
                     column: 0,
-                  })
+                  });
+                  this.editor.focus();
                 }}
               />
             );

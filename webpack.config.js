@@ -13,11 +13,25 @@ module.exports = {
   module: {
     defaultRules: [
       {
-        type: "javascript/auto",
+        type: 'javascript/auto',
         resolve: {}
       }
     ],
     rules: [
+      // {
+      //   test: /\.worker\.ts$/,
+      //   use: [
+      //     {
+      //       loader: 'worker-loader',
+      //     },
+      //     {
+      //       loader: 'ts-loader',
+      //       options: {
+      //         configFile: 'tsconfig.worker.json',
+      //       },
+      //     },
+      //   ],
+      // },
       {
         test: /\.tsx?$/,
         exclude: /node_modules/,

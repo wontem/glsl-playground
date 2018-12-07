@@ -32,12 +32,15 @@ export enum Wrap {
   MIRROR,
 }
 
-export interface TextureUpdate {
-  source: ImageBitmap | ImageData | HTMLImageElement | HTMLCanvasElement | HTMLVideoElement;
+export interface TextureState {
   resolution: Resolution;
   flipY: boolean;
   filter: Filter;
   wrap: [Wrap, Wrap];
+}
+
+export interface TextureUpdate extends TextureState {
+  source: ImageBitmap | ImageData | HTMLImageElement | HTMLCanvasElement | HTMLVideoElement;
 }
 
 export interface ReadonlyTexture {

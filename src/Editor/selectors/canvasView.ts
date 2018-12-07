@@ -4,6 +4,7 @@ import { State } from '../reducers/canvasView';
 const canvasView = (state: any): State => state.canvasView;
 
 export const buffers = (state: any) => canvasView(state).buffers;
+export const textures = (state: any) => canvasView(state).textures;
 export const buffersOrder = (state: any) => canvasView(state).buffersOrder;
 export const currentBufferName = (state: any) => canvasView(state).currentBuffer;
 export const outputBuffer = (state: any) => canvasView(state).outputBuffer;
@@ -13,6 +14,12 @@ export const bufferNames = (state: any) => {
   const buffersList = buffers(state);
 
   return Object.keys(buffersList);
+}
+
+export const textureNames = (state: any) => {
+  const texturesList = textures(state);
+
+  return Object.keys(texturesList);
 }
 
 export const bufferSelectorCreator = (bufferName: string) => {

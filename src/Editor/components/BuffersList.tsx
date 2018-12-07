@@ -1,8 +1,10 @@
+import { MdClear, MdAdd, MdRadioButtonChecked, MdRadioButtonUnchecked } from 'react-icons/md';
 import * as React from 'react';
 import styled from 'styled-components';
+import classnames from 'classnames';
 
 import * as ActionCreators from '../actions/canvasView';
-import { Point } from './Point';
+import { StyledIcon } from './Icon';
 import { Props } from './BuffersList.models';
 
 interface BuffersListItemProps {
@@ -16,17 +18,17 @@ interface BuffersListItemProps {
 }
 
 const Panel = styled.div`
-  border-top: 1px solid #00000030;
   display: flex;
   flex-direction: column;
   flex-grow: 1;
 `;
 
 const Name = styled.div`
-  font-family: Helvetica, sans-serif;
   font-size: 14px;
-  padding: 8px 16px;
+  margin: 0 24px;
   flex-grow: 1;
+  line-height: 24px;
+  cursor: pointer;
 `;
 
 class BuffersListItem extends React.Component<BuffersListItemProps> {
@@ -46,10 +48,16 @@ class BuffersListItem extends React.Component<BuffersListItemProps> {
 
   render() {
     return (
-      <li className={this.props.className}>
+      <li className={classnames({
+        [this.props.className]: true,
+        selected: this.props.isSelected,
+        output: this.props.isOutputBuffer,
+      })}>
+        <StyledIcon className='icon_output' color='#00a6ff' isActive={true} onClick={this.setOutput}>{
+          this.props.isOutputBuffer ? <MdRadioButtonChecked /> : <MdRadioButtonUnchecked />
+        }</StyledIcon>
         <Name onClick={this.select}>{this.props.bufferName}</Name>
-        <Point color={'#00a6ff'} isActive={this.props.isOutputBuffer} onClick={this.setOutput}></Point>
-        <Point color={'#cc0000'} onClick={this.remove}></Point>
+        <StyledIcon className='icon_delete' color='#FF5722' isActive={true} onClick={this.remove}><MdClear /></StyledIcon>
       </li>
     );
   }
@@ -63,10 +71,10 @@ const PlusBlock = styled.div`
 
 const ListItem = styled(BuffersListItem)`
   display: flex;
-  background: ${props => props.isSelected ? 'hsla(210, 100%, 50%, .1)' : 'transparent'};
+  padding: 4px 24px;
 
-  &:hover ${Point} {
-    opacity: 1;
+  &.selected {
+    font-weight: bold;
   }
 `;
 
@@ -79,7 +87,6 @@ const OrderList = styled.ul`
   overflow-y: auto;
 
   & > li {
-    font-family: Helvetica, sans-serif;
     font-size: 14px;
     padding: 8px 16px;
     margin: 4px;
@@ -95,11 +102,13 @@ const ChannelsList = styled.ul`
   overflow-y: auto;
 `;
 
-class Order extends React.Component<{ items: string[] }> {
+class Order extends React.Component<{ items: string[], outputBuffer: string }> {
   render() {
-    const items = this.props.items.map((item) => {
+    // const lastOutputBufferIndex = this.props.items.lastIndexOf(this.props.outputBuffer);
+
+    const items = this.props.items.map((item, index) => {
       return (
-        <li key={item}>{item}</li>
+        <li key={index}>{item}</li>
       )
     });
 
@@ -130,12 +139,13 @@ export class BuffersList extends React.Component<Props> {
     return (
       <Panel>
         <PlusBlock>
-          <Point color={'#008000'} onClick={this.props.createBuffer}></Point>
+          <StyledIcon isActive={true} color='#008000' onClick={this.props.createBuffer}><MdAdd /></StyledIcon>
         </PlusBlock>
         <ChannelsList>
           {listItems}
         </ChannelsList>
         <Order
+          outputBuffer={this.props.outputBuffer}
           items={this.props.buffersOrder}
         />
       </Panel>

@@ -1,30 +1,18 @@
 import { ThunkAction } from 'redux-thunk';
 
 import * as ActionCreators from '../actions/canvasView';
-import { Texture } from './GLSLView';
-
-export interface State {
-  startTime: number;
-  currentTime: number;
-  prevTime: number;
-  currentFrame: number;
-  isPlaying: boolean;
-  isHD: boolean;
-}
 
 export interface OwnProps {
 
 }
 
 export interface StateProps {
-  buffers: Record<string, string>;
-  textures: Record<string, Texture>;
-  buffersOrder: string[];
-  outputBuffer: string;
+  textureNames: string[];
 }
 
 interface _DispatchProps {
-  onError: typeof ActionCreators.setErrorsForBuffers;
+  createTexture: typeof ActionCreators.createTexture;
+  removeTexture: typeof ActionCreators.removeTexture;
 }
 
 export type DispatchProps = ConnectProps<_DispatchProps>;

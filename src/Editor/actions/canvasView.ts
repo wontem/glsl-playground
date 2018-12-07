@@ -7,13 +7,14 @@ import kekShader from '../../../kek.glsl';
 
 import { ActionTypes } from '../actionTypes/canvasView';
 import * as Selectors from '../selectors/canvasView';
-import { UpdateError } from '../components/GLSLView';
+import { UpdateError, Texture } from '../components/GLSLView';
 import { ViewEventType } from '../../View/models';
 import { parseLogs } from '../../View/utils/parseLogs';
 
 export const setOutputBuffer = createAction(ActionTypes.SET_OUTPUT_BUFFER, (name: string) => name);
 export const selectBuffer = createAction(ActionTypes.SELECT_BUFFER, (name: string) => name);
 export const setBuffers = createAction(ActionTypes.SET_BUFFERS, (buffers: Record<string, string>) => buffers);
+export const setTextures = createAction(ActionTypes.SET_TEXTURES, (textures: Record<string, Texture>) => textures);
 export const setBuffersOrder = createAction(ActionTypes.SET_BUFFERS_ORDER, (buffersOrder: string[]) => buffersOrder);
 export const setErrors = createAction(ActionTypes.SET_ERRORS, (errors: Record<string, ReturnType<typeof parseLogs>>) => errors);
 
@@ -73,16 +74,18 @@ export const removeBuffer = (
 ): ThunkResult => (dispatch, getState) => {
   const state = getState();
   const {[name]: deletedBuffer, ...buffers} = Selectors.buffers(state);
+  const newOrder = Selectors.buffersOrder(getState()).filter(v => v !== name);
+  const bufferToSelect = newOrder.length ? newOrder[newOrder.length - 1] : '';
 
   if (name === Selectors.outputBuffer(state)) {
-    dispatch(setOutputBuffer(''));
+    dispatch(setOutputBuffer(bufferToSelect));
   }
 
   if (name === Selectors.currentBufferName(state)) {
-    dispatch(selectBuffer(''));
+    dispatch(selectBuffer(bufferToSelect));
   }
 
-  dispatch(setBuffersOrder(Selectors.buffersOrder(getState()).filter(v => v !== name)));
+  dispatch(setBuffersOrder(newOrder));
   dispatch(setErrorsForBuffer(name, []));
   dispatch(setBuffers(buffers));
 };
@@ -97,9 +100,46 @@ export const createBuffer = (): ThunkResult => (dispatch, getState) => {
 
   const name = `channel${channelId}`;
 
-  // dispatch(updateBuffer(name, getFragmentShaderSource()));
-  dispatch(updateBuffer(name, kekShader));
+  dispatch(updateBuffer(name, getFragmentShaderSource()));
+  // dispatch(updateBuffer(name, kekShader));
   dispatch(setOutputBuffer(name));
   dispatch(selectBuffer(name));
   dispatch(setBuffersOrder([...Selectors.buffersOrder(getState()), name]));
 }
+
+export const createTexture = (): ThunkResult => (dispatch, getState) => {
+  const textureNames = Selectors.textureNames(getState());
+  let channelId: number = 0;
+
+  if (textureNames.length > 0) {
+    channelId = parseInt(textureNames[textureNames.length - 1].match(/texture(\d+)/)[1] as string, 10) + 1;
+  }
+
+  const name = `texture${channelId}`;
+
+  dispatch(updateTexture(name, {
+    src: 'https://i1.wp.com/www.synthtopia.com/wp-content/uploads/2018/12/aphex-twin-e1544115642976.jpg',
+  }));
+}
+
+export const updateTexture = (
+  name: string,
+  texture: Texture,
+): ThunkResult<ReturnType<typeof setTextures>> => (dispatch, getState) => {
+  if (!name) {
+    return;
+  }
+
+  const textures = Selectors.textures(getState());
+
+  dispatch(setTextures({ ...textures, [name]: texture }));
+};
+
+export const removeTexture = (
+  name: string,
+): ThunkResult => (dispatch, getState) => {
+  const state = getState();
+  const { [name]: deletedTexture, ...textures } = Selectors.textures(state);
+
+  dispatch(setTextures(textures));
+};

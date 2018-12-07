@@ -27,3 +27,11 @@ declare module '*.css' {
   const content: any;
   export default content;
 }
+
+declare module '*.worker' {
+  class WebpackWorker extends Worker {
+    constructor();
+  }
+
+  export default WebpackWorker;
+}

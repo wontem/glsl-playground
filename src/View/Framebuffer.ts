@@ -72,7 +72,7 @@ class Framebuffer {
   }
 }
 
-export class DoubleFramebuffer implements ReadonlyTexture {
+export class PingPongFramebuffer implements ReadonlyTexture {
   private currentFB: Framebuffer;
   private alternativeFB: Framebuffer;
 

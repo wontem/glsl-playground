@@ -8,6 +8,7 @@ import { setErrorsForBuffers } from '../actions/canvasView';
 import { DispatchProps, OwnProps, StateProps } from '../components/View.models';
 
 const mapStateToProps = createStructuredSelector({
+  textures: CanvasViewSelectors.textures,
   buffers: CanvasViewSelectors.buffers,
   buffersOrder: CanvasViewSelectors.buffersOrder,
   outputBuffer: CanvasViewSelectors.outputBuffer,

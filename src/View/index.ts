@@ -2,11 +2,11 @@ import * as defaultShaders from './defaultShaders';
 import { ViewEvent, Uniform, TextureUpdate, Attribute } from './models';
 import { Program } from './Program';
 import { Texture } from './Texture';
-import { DoubleFramebuffer } from './Framebuffer';
+import { PingPongFramebuffer } from './Framebuffer';
 
 interface BufferLink {
   program: Program;
-  output: DoubleFramebuffer;
+  output: PingPongFramebuffer;
 }
 
 export class View {
@@ -29,7 +29,7 @@ export class View {
     uniforms: Uniform[] = [],
   ) {
     const textures = [...this.textures];
-    const buffers = [...this.buffers].map<[string, DoubleFramebuffer]>(([name, { output }]) => [name, output]);
+    const buffers = [...this.buffers].map<[string, PingPongFramebuffer]>(([name, { output }]) => [name, output]);
 
     const textureUniforms: Uniform[] = [
       ...textures,
@@ -136,7 +136,7 @@ export class View {
     }
 
     const program = this.createProgram();
-    const output = new DoubleFramebuffer(gl, [gl.drawingBufferWidth, gl.drawingBufferHeight]);
+    const output = new PingPongFramebuffer(gl, [gl.drawingBufferWidth, gl.drawingBufferHeight]);
 
     this.buffers.set(bufferName, { program, output });
   }

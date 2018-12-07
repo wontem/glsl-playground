@@ -17,8 +17,8 @@
       "dom",
       // "dom.iterable"
     ]
-  },
-  "include": [
-    "**/*"
-  ]
+  }
+  // "include": [
+  //   "**/*"
+  // ]
 }

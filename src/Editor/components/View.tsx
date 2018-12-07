@@ -1,7 +1,7 @@
+import { MdHighQuality, MdFullscreen, MdPlayArrow, MdPause, MdSkipPrevious } from 'react-icons/md';
+import { StyledIcon } from './Icon';
 import { EventEmitter } from 'events';
 import * as React from 'react';
-// import { init } from '../actions/canvasView';
-import { Point } from './Point';
 import styled from 'styled-components';
 import { GLSLView } from './GLSLView';
 import { Props, State } from './View.models';
@@ -9,10 +9,10 @@ import { Props, State } from './View.models';
 const Panel = styled.div`
   display: flex;
   align-items: center;
+  font-size: 24px;
 `;
 
 const Info = styled.div`
-  font-family: "Fira Code";
   font-size: 12px;
   flex-grow: 1;
   flex-shrink: 0;
@@ -20,6 +20,10 @@ const Info = styled.div`
   overflow: hidden;
   text-overflow: ellipsis;
   padding: 0 16px;
+`;
+
+const GLSLViewStyled = styled(GLSLView)`
+  max-width: 400px;
 `;
 
 class AnimationLoop extends EventEmitter {
@@ -95,9 +99,12 @@ class AnimationLoop extends EventEmitter {
 
 export class View extends React.Component<Props, State> {
   private animationLoop: AnimationLoop;
+  private viewRef: React.RefObject<GLSLView>;
 
   constructor(props: Props) {
     super(props);
+
+    this.viewRef = React.createRef();
 
     const time = performance.now();
 
@@ -107,6 +114,7 @@ export class View extends React.Component<Props, State> {
       currentTime: time,
       prevTime: time,
       currentFrame: 0,
+      isHD: false,
     };
 
     this.animationLoop = new AnimationLoop();
@@ -148,12 +156,14 @@ export class View extends React.Component<Props, State> {
 
     return (
       <React.Fragment>
-        <GLSLView
+        <GLSLViewStyled
+          textures={this.props.textures}
           buffers={this.props.buffers}
           buffersOrder={this.props.buffersOrder}
           outputBuffer={this.props.outputBuffer}
-          width={400}
-          height={225}
+          pixelRatio={this.state.isHD ? window.devicePixelRatio : .5}
+          width={screen.width}
+          height={screen.height}
           onError={this.props.onError}
           uniforms={[
             {
@@ -173,15 +183,24 @@ export class View extends React.Component<Props, State> {
             }
           ]}
 
-          // TODO: implement
-          textures={{}}
+          ref={this.viewRef}
         />
         <Panel>
-          <Point onClick={() => this.resetAnimation()} />
-          <Point isActive={this.state.isPlaying} onClick={() => this.setState({ isPlaying: !this.state.isPlaying })} />
+          <StyledIcon onClick={() => this.resetAnimation()}><MdSkipPrevious /></StyledIcon>
+          <StyledIcon onClick={() => this.setState({ isPlaying: !this.state.isPlaying })}>
+            {this.state.isPlaying ? <MdPause /> : <MdPlayArrow />}
+          </StyledIcon>
           <Info>{time.toFixed(3)}</Info>
           <Info>{this.state.currentFrame}</Info>
-          <Info>{this.animationLoop.getFPS().toFixed(1)}</Info>
+          <Info>{(this.state.isPlaying ? this.animationLoop.getFPS() : 0).toFixed(1)}</Info>
+          <StyledIcon color='#00a6ff' isActive={this.state.isHD} onClick={() => {
+            this.setState({
+              isHD: !this.state.isHD,
+            });
+          }}><MdHighQuality /></StyledIcon>
+          <StyledIcon onClick={() => {
+            this.viewRef.current.getCanvas().requestFullscreen();
+          }} ><MdFullscreen /></StyledIcon>
         </Panel>
       </React.Fragment>
     );
