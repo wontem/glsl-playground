@@ -2,6 +2,10 @@ import { ThunkAction } from 'redux-thunk';
 
 import * as ActionCreators from '../actions/canvasView';
 
+export interface State {
+  addInput: string;
+}
+
 export interface OwnProps {
 
 }

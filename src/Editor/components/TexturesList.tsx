@@ -1,9 +1,9 @@
 import { MdClear, MdAdd } from 'react-icons/md';
 import * as React from 'react';
-import styled from 'styled-components';
+import { styled, Input } from 'reakit';
 
 import { StyledIcon } from './Icon';
-import { Props } from './TexturesList.models';
+import { Props, State } from './TexturesList.models';
 
 interface TexturesListItemProps {
   textureName: string;
@@ -18,9 +18,9 @@ const Panel = styled.div`
 `;
 
 const Name = styled.div`
+  flex-grow: 1;
   font-size: 14px;
   margin: 0 24px;
-  flex-grow: 1;
   line-height: 24px;
   cursor: pointer;
 `;
@@ -42,6 +42,7 @@ class TexturesListItem extends React.Component<TexturesListItemProps> {
 
 const PlusBlock = styled.div`
   display: flex;
+  padding: 4px 24px;
   justify-content: center;
   flex-shrink: 0;
 `;
@@ -61,7 +62,26 @@ const List = styled.ul`
   overflow-y: auto;
 `;
 
-export class TexturesList extends React.Component<Props> {
+const LinkInput = styled(Input)`
+  flex-grow: 1;
+  font-size: 14px;
+  margin: 0 24px;
+  line-height: 24px;
+  background: rgba(0, 0, 0, 0.1);
+  padding: 0 8px;
+  border-radius: 4px;
+  outline: none;
+`;
+
+export class TexturesList extends React.Component<Props, State> {
+  constructor(props: Props) {
+    super(props);
+
+    this.state = {
+      addInput: '',
+    };
+  }
+
   render() {
     const listItems = this.props.textureNames.map((textureName) => {
       return (
@@ -76,7 +96,20 @@ export class TexturesList extends React.Component<Props> {
     return (
       <Panel>
         <PlusBlock>
-          <StyledIcon isActive={true} color='#008000' onClick={this.props.createTexture}><MdAdd /></StyledIcon>
+          <LinkInput
+            value={this.state.addInput}
+            onChange={(event: any) => {
+              this.setState({
+                addInput: event.target.value,
+              });
+            }}
+          />
+          <StyledIcon isActive={true} color='#008000' onClick={() => {
+            this.props.createTexture(this.state.addInput);
+            this.setState({
+              addInput: '',
+            });
+          }}><MdAdd /></StyledIcon>
         </PlusBlock>
         <List>
           {listItems}

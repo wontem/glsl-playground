@@ -33,14 +33,11 @@ export enum Wrap {
 }
 
 export interface TextureState {
+  source: ImageBitmap | ImageData | HTMLImageElement | HTMLCanvasElement | HTMLVideoElement;
   resolution: Resolution;
   flipY: boolean;
   filter: Filter;
   wrap: [Wrap, Wrap];
-}
-
-export interface TextureUpdate extends TextureState {
-  source: ImageBitmap | ImageData | HTMLImageElement | HTMLCanvasElement | HTMLVideoElement;
 }
 
 export interface ReadonlyTexture {

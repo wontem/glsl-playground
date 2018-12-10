@@ -1,26 +1,9 @@
 import * as React from 'react';
 import { View } from '../../../View';
-import { ViewEvent, Uniform, TextureState, TextureUpdate } from '../../../View/models';
-
-async function getImage(src: string): Promise<HTMLImageElement> {
-  return new Promise<HTMLImageElement>((resolve, reject) => {
-    const image = document.createElement('img');
-    image.addEventListener('load', function load() {
-      image.removeEventListener('load', load);
-
-      resolve(image);
-    });
-    image.crossOrigin = 'anonymous';
-    image.src = src;
-  });
-}
-
-interface _Texture extends TextureState {
-  src: string;
-}
-
-// TODO: shouldn't be partial
-export type Texture = Partial<_Texture>;
+import { ViewEvent, Uniform } from '../../../View/models';
+// TODO: move typing in the GLSLView component models
+import { TextureState } from '../../reducers/canvasView';
+import { bitmapLoader } from '../../utils/bitmapLoader';
 
 interface GLSLViewProps {
   className?: string;
@@ -31,7 +14,7 @@ interface GLSLViewProps {
   width: number;
   height: number;
   uniforms: Uniform[];
-  textures: Record<string, Texture>;
+  textures: Record<string, TextureState>;
   onError: (errors: UpdateError[]) => void;
 }
 
@@ -103,15 +86,16 @@ export class GLSLView extends React.PureComponent<GLSLViewProps> {
   ): boolean {
     let errors: UpdateError[] = [];
 
+    const updateBuffer = (name: string, source: string) => {
+      const updateErrors = this.view.updateBuffer(name, source);
+      errors = [...errors, ...updateErrors.map(error => ({ name, error }))];
+    };
+
     const isChanged = diffObjects(prevBuffers, currentBuffers, {
+      update: updateBuffer,
       create: (name, source) => {
         this.view.createBuffer(name);
-        const updateErrors = this.view.updateBuffer(name, source);
-        errors = [...errors, ...updateErrors.map(error => ({ name, error }))]
-      },
-      update: (name, source) => {
-        const updateErrors = this.view.updateBuffer(name, source);
-        errors = [...errors, ...updateErrors.map(error => ({ name, error }))]
+        updateBuffer(name, source);
       },
       delete: (name) => {
         this.view.removeBuffer(name);
@@ -126,47 +110,34 @@ export class GLSLView extends React.PureComponent<GLSLViewProps> {
   }
 
   private updateTextures(
-    prevTextures: Record<string, Texture>,
-    currentTextures: Record<string, Texture>,
+    prevTextures: Record<string, TextureState>,
+    currentTextures: Record<string, TextureState>,
   ): boolean {
-    const isChanged = diffObjects(prevTextures, currentTextures, {
-      create: async (name, texture) => {
-        this.view.createTexture(name);
-
-        const { src, ...textureState } = texture;
-        const image = await getImage(src);
-
+    const updateTexture = async (name: string, { url, ...textureState }: TextureState) => {
+      try {
+        const bitmap = await bitmapLoader.download(name, url, { imageOrientation: textureState.flipY ? 'flipY' : 'none' });
         this.view.updateTexture(name, {
-          source: image,
-          resolution: [image.width, image.height],
+          source: bitmap,
           ...textureState,
         });
 
-        // TODO: remove it
-        this.view.render();
-      },
-      update: async (name, texture, oldTexture) => {
-        const { src, ...textureState } = texture;
-        let updates: Partial<TextureUpdate> = textureState;
+        bitmap.close();
 
-        if (texture.src !== oldTexture.src) {
-          const image = await getImage(src);
+        this.view.render(this.props.uniforms);
+      } catch (error) {
+        console.error(error);
+      }
+    };
 
-          updates = {
-            source: image,
-            resolution: [image.width, image.height],
-            ...textureState,
-          }
-        }
-
-        this.view.updateTexture(name, updates);
-        // TODO: remove it
-        this.view.render();
+    const isChanged = diffObjects(prevTextures, currentTextures, {
+      update: updateTexture,
+      create: async (name, texture) => {
+        this.view.createTexture(name);
+        updateTexture(name, texture);
       },
       delete: (name) => {
+        bitmapLoader.abort(name);
         this.view.removeTexture(name);
-        // TODO: remove it
-        this.view.render();
       },
     });
 
@@ -215,7 +186,10 @@ export class GLSLView extends React.PureComponent<GLSLViewProps> {
   }
 
   componentDidMount() {
-    this.view = new View(this.canvas.current.getContext('webgl2') as WebGL2RenderingContext);
+    const canvas = this.canvas.current;
+    const ctx = canvas.getContext('webgl2') as WebGL2RenderingContext;
+
+    this.view = new View(ctx);
     this.resize(this.props.width, this.props.height, this.props.pixelRatio);
   }
 

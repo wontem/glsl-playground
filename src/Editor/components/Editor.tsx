@@ -5,7 +5,7 @@ import * as React from 'react';
 // import onigasmAsm from 'onigasm/lib/onigasm.wasm';
 // import glslLanguage from './glsl.tmLanguage';
 
-import styled from 'styled-components';
+import { styled } from 'reakit';
 import MonacoEditor, { EditorWillMount, EditorDidMount } from 'react-monaco-editor';
 
 import { Props, State } from './Editor.models';

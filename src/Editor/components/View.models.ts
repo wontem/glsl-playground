@@ -1,7 +1,7 @@
 import { ThunkAction } from 'redux-thunk';
 
 import * as ActionCreators from '../actions/canvasView';
-import { Texture } from './GLSLView';
+import { TextureState } from '../reducers/canvasView';
 
 export interface State {
   startTime: number;
@@ -18,7 +18,7 @@ export interface OwnProps {
 
 export interface StateProps {
   buffers: Record<string, string>;
-  textures: Record<string, Texture>;
+  textures: Record<string, TextureState>;
   buffersOrder: string[];
   outputBuffer: string;
 }

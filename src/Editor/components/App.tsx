@@ -1,12 +1,12 @@
 import * as React from 'react';
-import styled, { createGlobalStyle } from 'styled-components';
+import { styled, injectGlobal } from 'reakit';
 import 'reset-css';
 
 import Editor from '../containers/Editor';
 import View from '../containers/View';
 import { TabsPanel } from './TabsPanel';
 
-const GlobalStyle = createGlobalStyle`
+injectGlobal`
   html, body, #root {
     position: absolute;
     width: 100%;
@@ -54,7 +54,6 @@ export class App extends React.Component {
           <View />
           <TabsPanel />
         </RightColumn>
-        <GlobalStyle />
       </Panel>
     );
   }

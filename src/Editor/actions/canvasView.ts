@@ -3,18 +3,18 @@ import { createAction } from 'redux-actions';
 import { ThunkAction } from 'redux-thunk';
 
 import { getFragmentShaderSource } from '../../View/defaultShaders';
-import kekShader from '../../../kek.glsl';
 
 import { ActionTypes } from '../actionTypes/canvasView';
 import * as Selectors from '../selectors/canvasView';
-import { UpdateError, Texture } from '../components/GLSLView';
-import { ViewEventType } from '../../View/models';
+import { UpdateError } from '../components/GLSLView';
+import { ViewEventType, Wrap, Filter } from '../../View/models';
 import { parseLogs } from '../../View/utils/parseLogs';
+import { TextureState } from '../reducers/canvasView';
 
 export const setOutputBuffer = createAction(ActionTypes.SET_OUTPUT_BUFFER, (name: string) => name);
 export const selectBuffer = createAction(ActionTypes.SELECT_BUFFER, (name: string) => name);
 export const setBuffers = createAction(ActionTypes.SET_BUFFERS, (buffers: Record<string, string>) => buffers);
-export const setTextures = createAction(ActionTypes.SET_TEXTURES, (textures: Record<string, Texture>) => textures);
+export const setTextures = createAction(ActionTypes.SET_TEXTURES, (textures: Record<string, TextureState>) => textures);
 export const setBuffersOrder = createAction(ActionTypes.SET_BUFFERS_ORDER, (buffersOrder: string[]) => buffersOrder);
 export const setErrors = createAction(ActionTypes.SET_ERRORS, (errors: Record<string, ReturnType<typeof parseLogs>>) => errors);
 
@@ -100,14 +100,25 @@ export const createBuffer = (): ThunkResult => (dispatch, getState) => {
 
   const name = `channel${channelId}`;
 
-  dispatch(updateBuffer(name, getFragmentShaderSource()));
-  // dispatch(updateBuffer(name, kekShader));
+  // dispatch(updateBuffer(name, getFragmentShaderSource()));
+  dispatch(updateBuffer(name, `#version 300 es
+precision mediump float;
+
+out vec4 frag_color;
+uniform sampler2D texture0;
+uniform vec2 channel0_resolution;
+
+void main() {
+    vec2 uv = gl_FragCoord.xy / channel0_resolution;
+    frag_color = texture(texture0, uv);
+}
+`));
   dispatch(setOutputBuffer(name));
   dispatch(selectBuffer(name));
   dispatch(setBuffersOrder([...Selectors.buffersOrder(getState()), name]));
 }
 
-export const createTexture = (): ThunkResult => (dispatch, getState) => {
+export const createTexture = (url: string): ThunkResult => async (dispatch, getState) => {
   const textureNames = Selectors.textureNames(getState());
   let channelId: number = 0;
 
@@ -118,13 +129,16 @@ export const createTexture = (): ThunkResult => (dispatch, getState) => {
   const name = `texture${channelId}`;
 
   dispatch(updateTexture(name, {
-    src: 'https://i1.wp.com/www.synthtopia.com/wp-content/uploads/2018/12/aphex-twin-e1544115642976.jpg',
+    url,
+    wrap: [Wrap.CLAMP, Wrap.CLAMP],
+    flipY: true,
+    filter: Filter.LINEAR,
   }));
 }
 
 export const updateTexture = (
   name: string,
-  texture: Texture,
+  texture: TextureState,
 ): ThunkResult<ReturnType<typeof setTextures>> => (dispatch, getState) => {
   if (!name) {
     return;

@@ -1,5 +1,5 @@
 import * as defaultShaders from './defaultShaders';
-import { ViewEvent, Uniform, TextureUpdate, Attribute } from './models';
+import { ViewEvent, Uniform, TextureState, Attribute } from './models';
 import { Program } from './Program';
 import { Texture } from './Texture';
 import { PingPongFramebuffer } from './Framebuffer';
@@ -93,7 +93,7 @@ export class View {
 
   public updateTexture(
     name: string,
-    textureUpdate: Partial<TextureUpdate>,
+    textureUpdate: Partial<TextureState>,
   ) {
     const texture = this.textures.get(name);
 

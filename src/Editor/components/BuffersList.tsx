@@ -1,6 +1,6 @@
 import { MdClear, MdAdd, MdRadioButtonChecked, MdRadioButtonUnchecked } from 'react-icons/md';
 import * as React from 'react';
-import styled from 'styled-components';
+import { styled } from 'reakit';
 import classnames from 'classnames';
 
 import * as ActionCreators from '../actions/canvasView';

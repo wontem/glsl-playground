@@ -3,11 +3,18 @@ import { handleActions } from 'redux-actions';
 import { ActionTypes } from '../actionTypes/canvasView';
 import * as ActionCreators from '../actions/canvasView';
 import { parseLogs } from '../../View/utils/parseLogs';
-import { Texture } from '../components/GLSLView';
+import { Filter, Wrap } from '../../View/models';
+
+export interface TextureState {
+  url: string;
+  flipY: boolean;
+  filter: Filter;
+  wrap: [Wrap, Wrap];
+}
 
 export interface State {
   buffers: Record<string, string>;
-  textures: Record<string, Texture>;
+  textures: Record<string, TextureState>;
   currentBuffer: string;
   outputBuffer: string;
   buffersOrder: string[];
