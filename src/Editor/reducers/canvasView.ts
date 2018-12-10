@@ -32,6 +32,13 @@ const initialState: State = {
 
 export const canvasView = handleActions<State, any>(
   {
+    [ActionTypes.SET_PROJECT]: (state, action: ReturnType<typeof ActionCreators.setProject>): State => {
+      return {
+        ...action.payload,
+        currentBuffer: '',
+        errors: {},
+      }
+    },
     [ActionTypes.SET_BUFFERS]: (state, action: ReturnType<typeof ActionCreators.setBuffers>): State => {
       return {
         ...state,

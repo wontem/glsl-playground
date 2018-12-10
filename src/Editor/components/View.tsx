@@ -1,10 +1,11 @@
-import { MdHighQuality, MdFullscreen, MdPlayArrow, MdPause, MdSkipPrevious } from 'react-icons/md';
+import { MdHighQuality, MdFullscreen, MdPlayArrow, MdPause, MdSkipPrevious, MdSave, MdFolderOpen } from 'react-icons/md';
 import { StyledIcon } from './Icon';
 import { EventEmitter } from 'events';
 import * as React from 'react';
 import styled from 'styled-components';
 import { GLSLView } from './GLSLView';
 import { Props, State } from './View.models';
+import { ProjectData } from '../actions/canvasView';
 
 const Panel = styled.div`
   display: flex;
@@ -97,6 +98,22 @@ class AnimationLoop extends EventEmitter {
   }
 }
 
+const saveFile = (() => {
+  const a = document.createElement('a');
+
+  return (blob: Blob, name: string): void => {
+    const url = URL.createObjectURL(blob);
+    a.href = url;
+    a.download = name;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+})();
+
+const createProjectFile = (data: ProjectData): Blob => {
+  return new Blob([JSON.stringify(data)], { type: 'application/json' });
+};
+
 export class View extends React.Component<Props, State> {
   private animationLoop: AnimationLoop;
   private viewRef: React.RefObject<GLSLView>;
@@ -156,6 +173,31 @@ export class View extends React.Component<Props, State> {
 
     return (
       <React.Fragment>
+        <Panel>
+          <StyledIcon onClick={() => {
+            saveFile(createProjectFile({
+              buffers: this.props.buffers,
+              textures: this.props.textures,
+              buffersOrder: this.props.buffersOrder,
+              outputBuffer: this.props.outputBuffer,
+            }), 'glslProject.json');
+          }} ><MdSave /></StyledIcon>
+          <StyledIcon><label><MdFolderOpen /><input
+            style={{display: 'none'}}
+            onChange={(event) => {
+              const reader = new FileReader();
+
+              reader.addEventListener('load', (event) => {
+                const jsonString = (event.target as FileReader).result as string;
+                const project: ProjectData = JSON.parse(jsonString);
+
+                this.props.setProject(project);
+              });
+              reader.readAsText(event.target.files[0]);
+            }}
+            type='file'
+          /></label></StyledIcon>
+        </Panel>
         <GLSLViewStyled
           textures={this.props.textures}
           buffers={this.props.buffers}

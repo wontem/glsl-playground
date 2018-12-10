@@ -1,7 +1,6 @@
 import { ThunkAction } from 'redux-thunk';
 
 import * as ActionCreators from '../actions/canvasView';
-import { TextureState } from '../reducers/canvasView';
 
 export interface State {
   startTime: number;
@@ -16,14 +15,12 @@ export interface OwnProps {
 
 }
 
-export interface StateProps {
-  buffers: Record<string, string>;
-  textures: Record<string, TextureState>;
-  buffersOrder: string[];
-  outputBuffer: string;
+export interface StateProps extends ActionCreators.ProjectData {
+
 }
 
 interface _DispatchProps {
+  setProject: typeof ActionCreators.setProject;
   onError: typeof ActionCreators.setErrorsForBuffers;
 }
 

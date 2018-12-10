@@ -11,6 +11,14 @@ import { ViewEventType, Wrap, Filter } from '../../View/models';
 import { parseLogs } from '../../View/utils/parseLogs';
 import { TextureState } from '../reducers/canvasView';
 
+export interface ProjectData {
+  buffers: Record<string, string>;
+  textures: Record<string, TextureState>;
+  buffersOrder: string[];
+  outputBuffer: string;
+};
+
+export const setProject = createAction(ActionTypes.SET_PROJECT, (projectData: ProjectData) => projectData);
 export const setOutputBuffer = createAction(ActionTypes.SET_OUTPUT_BUFFER, (name: string) => name);
 export const selectBuffer = createAction(ActionTypes.SELECT_BUFFER, (name: string) => name);
 export const setBuffers = createAction(ActionTypes.SET_BUFFERS, (buffers: Record<string, string>) => buffers);
@@ -132,7 +140,7 @@ export const createTexture = (url: string): ThunkResult => async (dispatch, getS
     url,
     wrap: [Wrap.CLAMP, Wrap.CLAMP],
     flipY: true,
-    filter: Filter.LINEAR,
+    filter: Filter.NEAREST,
   }));
 }
 

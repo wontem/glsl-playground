@@ -147,8 +147,8 @@ export class GLSLView extends React.PureComponent<GLSLViewProps> {
   componentDidUpdate(prevProps: GLSLViewProps) {
     let isChanged = false;
 
-    isChanged = isChanged || this.updateBuffers(prevProps.buffers, this.props.buffers);
-    isChanged = isChanged || this.updateTextures(prevProps.textures, this.props.textures);
+    isChanged = this.updateBuffers(prevProps.buffers, this.props.buffers) || isChanged;
+    isChanged = this.updateTextures(prevProps.textures, this.props.textures) || isChanged;
 
     if (prevProps.outputBuffer !== this.props.outputBuffer) {
       this.view.setBufferToOutput(this.props.outputBuffer);
