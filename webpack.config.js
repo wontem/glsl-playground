@@ -1,4 +1,5 @@
 const path = require('path');
+const webpack = require('webpack');
 const createStyledComponentsTransformer = require('typescript-plugin-styled-components').default;
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 // const WebpackNotifierPlugin = require('webpack-notifier');
@@ -10,6 +11,9 @@ module.exports = {
   mode: 'development',
   devtool: 'inline-source-map',
   entry: './src/Editor/index.tsx',
+  devServer: {
+    hot: true
+  },
   module: {
     defaultRules: [
       {
@@ -85,6 +89,7 @@ module.exports = {
     new MonacoWebpackPlugin({
       languages: [],
     }),
+    new webpack.HotModuleReplacementPlugin(),
     // new WebpackNotifierPlugin(),
   ]
 };

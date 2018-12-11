@@ -4,9 +4,13 @@ import { styled, Input } from 'reakit';
 
 import { StyledIcon } from './Icon';
 import { Props, State } from './TexturesList.models';
+import { TextureState } from '../reducers/canvasView';
+import { Filter, Wrap } from '../../View/models';
 
 interface TexturesListItemProps {
   textureName: string;
+  textureState: TextureState;
+  updateTexture: (name: string, textureState: TextureState) => void;
   removeTexture: (name: string) => void;
   className?: string;
 }
@@ -19,9 +23,7 @@ const Panel = styled.div`
 
 const Name = styled.div`
   flex-grow: 1;
-  font-size: 14px;
   margin: 0 24px;
-  line-height: 24px;
   cursor: pointer;
 `;
 
@@ -34,6 +36,48 @@ class TexturesListItem extends React.Component<TexturesListItemProps> {
     return (
       <li className={this.props.className}>
         <Name>{this.props.textureName}</Name>
+        <Input
+          as='select'
+          value={this.props.textureState.filter}
+          onChange={(event: any) => {
+            this.props.updateTexture(this.props.textureName, {
+              ...this.props.textureState,
+              filter: parseInt(event.target.value, 10),
+            });
+          }}
+        >
+          <option value={Filter.LINEAR}>Linear</option>
+          <option value={Filter.NEAREST}>Nearest</option>
+          <option value={Filter.MIPMAP}>Mipmap</option>
+        </Input>
+        <Input
+          as='select'
+          value={this.props.textureState.wrap[0]}
+          onChange={(event: any) => {
+            this.props.updateTexture(this.props.textureName, {
+              ...this.props.textureState,
+              wrap: [parseInt(event.target.value, 10), this.props.textureState.wrap[1]],
+            });
+          }}
+        >
+          <option value={Wrap.CLAMP}>Clamp</option>
+          <option value={Wrap.REPEAT}>Repeat</option>
+          <option value={Wrap.MIRROR}>Mirror</option>
+        </Input>
+        <Input
+          as='select'
+          value={this.props.textureState.wrap[1]}
+          onChange={(event: any) => {
+            this.props.updateTexture(this.props.textureName, {
+              ...this.props.textureState,
+              wrap: [this.props.textureState.wrap[0], parseInt(event.target.value, 10)],
+            });
+          }}
+        >
+          <option value={Wrap.CLAMP}>Clamp</option>
+          <option value={Wrap.REPEAT}>Repeat</option>
+          <option value={Wrap.MIRROR}>Mirror</option>
+        </Input>
         <StyledIcon className='icon_delete' color='#FF5722' isActive={true} onClick={this.remove}><MdClear /></StyledIcon>
       </li>
     );
@@ -50,6 +94,8 @@ const PlusBlock = styled.div`
 const ListItem = styled(TexturesListItem)`
   display: flex;
   padding: 4px 24px;
+  line-height: 24px;
+  font-size: 14px;
 
   &.selected {
     font-weight: bold;
@@ -88,7 +134,9 @@ export class TexturesList extends React.Component<Props, State> {
         <ListItem
           key={textureName}
           textureName={textureName}
+          textureState={this.props.textures[textureName]}
           removeTexture={this.props.removeTexture}
+          updateTexture={this.props.updateTexture}
         />
       );
     });

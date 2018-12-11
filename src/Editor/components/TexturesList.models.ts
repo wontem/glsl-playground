@@ -1,6 +1,7 @@
 import { ThunkAction } from 'redux-thunk';
 
 import * as ActionCreators from '../actions/canvasView';
+import { TextureState } from '../reducers/canvasView';
 
 export interface State {
   addInput: string;
@@ -11,11 +12,13 @@ export interface OwnProps {
 }
 
 export interface StateProps {
+  textures: Record<string, TextureState>
   textureNames: string[];
 }
 
 interface _DispatchProps {
   createTexture: typeof ActionCreators.createTexture;
+  updateTexture: typeof ActionCreators.updateTexture;
   removeTexture: typeof ActionCreators.removeTexture;
 }
 

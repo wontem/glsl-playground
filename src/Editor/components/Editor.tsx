@@ -1,15 +1,12 @@
 import * as React from 'react';
-// import { loadWASM } from 'onigasm';
-// import { Registry } from 'monaco-textmate'; // peer dependency
-// import { wireTmGrammars } from 'monaco-editor-textmate';
-// import onigasmAsm from 'onigasm/lib/onigasm.wasm';
-// import glslLanguage from './glsl.tmLanguage';
 
 import { styled } from 'reakit';
 import MonacoEditor, { EditorWillMount, EditorDidMount } from 'react-monaco-editor';
 
 import { Props, State } from './Editor.models';
 import { editor } from 'monaco-editor';
+
+import { language } from '../glsl.language';
 
 const Container = styled.div`
   height: 0;
@@ -67,26 +64,11 @@ export class Editor extends React.Component<Props, State> {
   private editor: editor.IStandaloneCodeEditor;
 
   editorWillMount: EditorWillMount = async (monaco) => {
-    // await loadWASM(onigasmAsm); // See https://www.npmjs.com/package/onigasm#light-it-up
+    monaco.languages.register({
+      id: 'glsl',
+    });
 
-    // const registry = new Registry({
-    //   getGrammarDefinition: async (scopeName) => {
-    //     if (scopeName === 'source.glsl') {
-    //       return {
-    //         format: 'plist',
-    //         content: glslLanguage,
-    //       }
-    //     }
-
-    //     return null;
-    //   }
-    // });
-
-    // // map of monaco "language id's" to TextMate scopeNames
-    // const grammars = new Map();
-    // grammars.set('plaintext', 'source.glsl');
-
-    // await wireTmGrammars(monaco, registry, grammars);
+    monaco.languages.setMonarchTokensProvider('glsl', language);
   }
 
   editorDidMount: EditorDidMount = (editor) => {
@@ -98,7 +80,7 @@ export class Editor extends React.Component<Props, State> {
       <React.Fragment>
         <Container>
           <MonacoEditor
-            language='plaintext'
+            language='glsl'
             options={{
               automaticLayout: true,
               fontFamily: '"Fira Code", Menlo, Monaco, "Courier New", monospace',

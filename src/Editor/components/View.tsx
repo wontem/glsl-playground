@@ -182,7 +182,7 @@ export class View extends React.Component<Props, State> {
               outputBuffer: this.props.outputBuffer,
             }), 'glslProject.json');
           }} ><MdSave /></StyledIcon>
-          <StyledIcon><label><MdFolderOpen /><input
+          <StyledIcon><label style={{cursor: 'pointer'}}><MdFolderOpen /><input
             style={{display: 'none'}}
             onChange={(event) => {
               const reader = new FileReader();
