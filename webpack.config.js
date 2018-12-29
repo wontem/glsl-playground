@@ -4,15 +4,22 @@ const createStyledComponentsTransformer = require('typescript-plugin-styled-comp
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 // const WebpackNotifierPlugin = require('webpack-notifier');
 const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
+// const { CheckerPlugin } = require('awesome-typescript-loader');
 
 const styledComponentsTransformer = createStyledComponentsTransformer();
 
 module.exports = {
+  context: path.resolve(__dirname, './src'),
   mode: 'development',
   devtool: 'inline-source-map',
-  entry: './src/Editor/index.tsx',
+  entry: [
+    // 'react-hot-loader/patch', // activate HMR for React
+    // 'webpack-dev-server/client?http://localhost:8080',// bundle the client for webpack-dev-server and connect to the provided endpoint
+    // 'webpack/hot/only-dev-server', // bundle the client for hot reloading, only- means to only hot reload for successful updates
+    './Editor/index.tsx'
+  ],
   devServer: {
-    hot: true
+    hot: true,
   },
   module: {
     defaultRules: [
@@ -22,25 +29,12 @@ module.exports = {
       }
     ],
     rules: [
-      // {
-      //   test: /\.worker\.ts$/,
-      //   use: [
-      //     {
-      //       loader: 'worker-loader',
-      //     },
-      //     {
-      //       loader: 'ts-loader',
-      //       options: {
-      //         configFile: 'tsconfig.worker.json',
-      //       },
-      //     },
-      //   ],
-      // },
       {
         test: /\.tsx?$/,
         exclude: /node_modules/,
         loader: 'ts-loader',
         options: {
+          transpileOnly: true,
           getCustomTransformers: () => ({ before: [styledComponentsTransformer] }),
         }
       },
@@ -50,10 +44,6 @@ module.exports = {
       },
       {
         test: /\.(png|jpg|gif)$/,
-        loader: 'file-loader',
-      },
-      {
-        test: /\.wasm$/,
         loader: 'file-loader',
       },
       {
@@ -82,14 +72,17 @@ module.exports = {
   },
   output: {
     filename: 'main.js',
-    path: path.resolve(__dirname, 'dist')
+    path: path.resolve(__dirname, 'dist'),
+    publicPath: '/',
   },
   plugins: [
     new HtmlWebpackPlugin(),
     new MonacoWebpackPlugin({
       languages: [],
     }),
-    new webpack.HotModuleReplacementPlugin(),
+    // new CheckerPlugin(),
+    new webpack.HotModuleReplacementPlugin(), // enable HMR globally
+    new webpack.NamedModulesPlugin(), // prints more readable module names in the browser console on HMR updates
     // new WebpackNotifierPlugin(),
   ]
 };

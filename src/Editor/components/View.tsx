@@ -204,8 +204,8 @@ export class View extends React.Component<Props, State> {
           buffersOrder={this.props.buffersOrder}
           outputBuffer={this.props.outputBuffer}
           pixelRatio={this.state.isHD ? window.devicePixelRatio : .5}
-          width={screen.width}
-          height={screen.height}
+          width={2000}
+          height={2000}
           onError={this.props.onError}
           uniforms={[
             {
@@ -220,7 +220,7 @@ export class View extends React.Component<Props, State> {
             },
             {
               name: 'u_frame',
-              method: '1f',
+              method: '1i',
               value: [this.state.currentFrame],
             }
           ]}

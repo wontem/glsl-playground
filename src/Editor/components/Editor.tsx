@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { styled } from 'reakit';
-import MonacoEditor, { EditorWillMount, EditorDidMount } from 'react-monaco-editor';
+import MonacoEditor, { EditorWillMount, EditorDidMount, ChangeHandler } from 'react-monaco-editor';
 
 import { Props, State } from './Editor.models';
 import { editor } from 'monaco-editor';
@@ -69,11 +69,19 @@ export class Editor extends React.Component<Props, State> {
     });
 
     monaco.languages.setMonarchTokensProvider('glsl', language);
-  }
+  };
 
   editorDidMount: EditorDidMount = (editor) => {
     this.editor = editor;
   }
+
+  componentDidUpdate(prevProps: Props) {
+    if (this.props.name !== prevProps.name && this.editor) {
+      this.editor.setValue(this.props.source);
+    }
+  }
+
+  onChange: ChangeHandler = (value) => this.props.onChange(this.props.name, value)
 
   render() {
     return (
@@ -87,8 +95,7 @@ export class Editor extends React.Component<Props, State> {
               scrollBeyondLastLine: false,
               readOnly: !this.props.name,
             }}
-            value={this.props.source}
-            onChange={(value) => this.props.onChange(this.props.name, value)}
+            onChange={this.onChange}
             editorWillMount={this.editorWillMount}
             editorDidMount={this.editorDidMount}
           />
