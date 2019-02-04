@@ -1,4 +1,4 @@
-import { MdHighQuality, MdFullscreen, MdPlayArrow, MdPause, MdSkipPrevious, MdSave, MdFolderOpen } from 'react-icons/md';
+import { MdImage, MdHighQuality, MdFullscreen, MdPlayArrow, MdPause, MdSkipPrevious, MdSave, MdFolderOpen } from 'react-icons/md';
 import { StyledIcon } from './Icon';
 import { EventEmitter } from 'events';
 import * as React from 'react';
@@ -6,6 +6,7 @@ import styled from 'styled-components';
 import { GLSLView } from './GLSLView';
 import { Props, State } from './View.models';
 import { ProjectData } from '../actions/canvasView';
+// const CCapture = require('ccapture.js');
 
 const Panel = styled.div`
   display: flex;
@@ -45,11 +46,11 @@ class AnimationLoop extends EventEmitter {
     this.fpsReset();
   }
 
-  fpsBegin() {
+  private fpsBegin(): void {
     this.fpsBeginTime = performance.now();
   }
 
-  fpsEnd() {
+  private fpsEnd(): void {
     const time = performance.now();
     this.fpsFramesElapsed += 1;
 
@@ -61,7 +62,7 @@ class AnimationLoop extends EventEmitter {
     }
   }
 
-  loop() {
+  private loop(): void {
     this.fpsBegin();
 
     this.emit('tick');
@@ -72,11 +73,11 @@ class AnimationLoop extends EventEmitter {
     });
   }
 
-  getFPS() {
+  getFPS(): number {
     return this.fps;
   }
 
-  fpsReset() {
+  private fpsReset(): void {
     this.fps = 0;
     this.fpsFramesElapsed = 0;
     this.fpsBeginTime = performance.now();
@@ -109,6 +110,12 @@ const saveFile = (() => {
     URL.revokeObjectURL(url);
   };
 })();
+
+// const saveImage = (canvas: HTMLCanvasElement, name: string) => {
+//   canvas.toBlob((blob) => {
+//     saveFile(blob, name);
+//   });
+// }
 
 const createProjectFile = (data: ProjectData): Blob => {
   return new Blob([JSON.stringify(data)], { type: 'application/json' });
@@ -180,8 +187,11 @@ export class View extends React.Component<Props, State> {
               textures: this.props.textures,
               buffersOrder: this.props.buffersOrder,
               outputBuffer: this.props.outputBuffer,
-            }), 'glslProject.json');
+            }), `glslProject_${Date.now()}.json`);
           }} ><MdSave /></StyledIcon>
+          <StyledIcon onClick={() => {
+            // saveImage(this.viewRef.current['canvas'].current, `glslProjectIMG_${Date.now()}.png` ); // TODO: remove hack
+          }} ><MdImage /></StyledIcon>
           <StyledIcon><label style={{cursor: 'pointer'}}><MdFolderOpen /><input
             style={{display: 'none'}}
             onChange={(event) => {
@@ -204,8 +214,8 @@ export class View extends React.Component<Props, State> {
           buffersOrder={this.props.buffersOrder}
           outputBuffer={this.props.outputBuffer}
           pixelRatio={this.state.isHD ? window.devicePixelRatio : .5}
-          width={2000}
-          height={2000}
+          width={1200}
+          height={1200}
           onError={this.props.onError}
           uniforms={[
             {

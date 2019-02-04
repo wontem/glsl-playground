@@ -21,6 +21,7 @@ export const StyledIcon = styled(Icon)`
   cursor: pointer;
   user-select: none;
   overflow: hidden;
+  flex-shrink: 0;
 
   &:hover {
     opacity: 1;
