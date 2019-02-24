@@ -9,6 +9,16 @@ export interface State {
   currentFrame: number;
   isPlaying: boolean;
   isHD: boolean;
+  mouseStart: number[];
+  mouseEnd: number[];
+  mouse: number[];
+  isMousePressed: boolean;
+  isRecording: boolean;
+  name: string;
+  width: number;
+  height: number;
+  currentWidth: number;
+  currentHeight: number;
 }
 
 export interface OwnProps {

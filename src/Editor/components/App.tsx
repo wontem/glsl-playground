@@ -1,12 +1,12 @@
 import * as React from 'react';
-import { styled, injectGlobal } from 'reakit';
+import { styled, createGlobalStyle } from 'reakit';
 import 'reset-css';
 
 import Editor from '../containers/Editor';
 import View from '../containers/View';
 import { TabsPanel } from './TabsPanel';
 
-injectGlobal`
+const GlobalStyle = createGlobalStyle`
   html, body, #root {
     position: absolute;
     width: 100%;
@@ -46,6 +46,8 @@ const RightColumn = styled(Column)`
 export class App extends React.Component {
   render() {
     return (
+      <>
+      <GlobalStyle/>
       <Panel>
         <LeftColumn>
           <Editor />
@@ -55,6 +57,7 @@ export class App extends React.Component {
           <TabsPanel />
         </RightColumn>
       </Panel>
+      </>
     );
   }
 }

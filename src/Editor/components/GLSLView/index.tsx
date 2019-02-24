@@ -7,7 +7,6 @@ import { bitmapLoader } from '../../utils/bitmapLoader';
 
 interface GLSLViewProps {
   className?: string;
-  pixelRatio: number;
   buffers: Record<string, string>;
   buffersOrder: string[];
   outputBuffer: string;
@@ -16,6 +15,9 @@ interface GLSLViewProps {
   uniforms: Uniform[];
   textures: Record<string, TextureState>;
   onError: (errors: UpdateError[]) => void;
+  onMouseDown: React.MouseEventHandler<HTMLCanvasElement>;
+  onMouseUp: React.MouseEventHandler<HTMLCanvasElement>;
+  onMouseMove: React.MouseEventHandler<HTMLCanvasElement>;
 }
 
 interface DiffCallbacks<K, V> {
@@ -162,10 +164,9 @@ export class GLSLView extends React.PureComponent<GLSLViewProps> {
 
     if (
       prevProps.width !== this.props.width ||
-      prevProps.height !== this.props.height ||
-      prevProps.pixelRatio !== this.props.pixelRatio
+      prevProps.height !== this.props.height
     ) {
-      this.resize(this.props.width, this.props.height, this.props.pixelRatio);
+      this.view.resize(this.props.width, this.props.height);
       isChanged = true;
     }
 
@@ -178,19 +179,14 @@ export class GLSLView extends React.PureComponent<GLSLViewProps> {
     }
   }
 
-  resize(width: number, height: number, pixelRatio: number): void {
-    this.view.resize(
-      width * pixelRatio,
-      height * pixelRatio
-    );
-  }
-
   componentDidMount() {
     const canvas = this.canvas.current;
-    const ctx = canvas.getContext('webgl2') as WebGL2RenderingContext;
+    const ctx = canvas.getContext('webgl2', {
+      preserveDrawingBuffer: true,
+    }) as WebGL2RenderingContext;
 
     this.view = new View(ctx);
-    this.resize(this.props.width, this.props.height, this.props.pixelRatio);
+    this.view.resize(this.props.width, this.props.height);
   }
 
   componentWillUnmount() {
@@ -202,6 +198,9 @@ export class GLSLView extends React.PureComponent<GLSLViewProps> {
     return (
       <canvas
         className={this.props.className}
+        onMouseDown={this.props.onMouseDown}
+        onMouseUp={this.props.onMouseUp}
+        onMouseMove={this.props.onMouseMove}
         ref={this.canvas}
       />
     );
