@@ -8,9 +8,7 @@ import * as Selectors from '../selectors/canvasView';
 import { DispatchProps, OwnProps, StateProps } from '../components/Editor.models';
 
 const mapStateToProps = createStructuredSelector({
-  name: Selectors.currentBufferName,
-  source: Selectors.currentBufferSource,
-  errors: Selectors.currentBufferErrors,
+  items: Selectors.items,
 });
 
 const mapDispatchToProps = (dispatch: any) => bindActionCreators(

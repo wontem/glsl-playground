@@ -1,5 +1,7 @@
-// import * as reselect from 'reselect';
+import * as reselect from 'reselect';
+import * as monaco from 'monaco-editor';
 import { State } from '../reducers/canvasView';
+import { Item } from '../components/Editor.models';
 
 const canvasView = (state: any): State => state.canvasView;
 
@@ -22,33 +24,28 @@ export const textureNames = (state: any) => {
   return Object.keys(texturesList);
 }
 
-export const bufferSelectorCreator = (bufferName: string) => {
-  return (state: any) => {
-    const buffersList = buffers(state);
+export const items = reselect.createSelector(
+  [buffersOrder, buffers, errors, currentBufferName],
+  (buffersOrder, buffers, errors, currentBufferName): Item[] => {
+    return (buffersOrder || []).map((name) => {
+      const source = buffers[name];
+      const markers = (errors[name] || []).map((log) => {
+        return {
+          severity: monaco.MarkerSeverity.Error,
+          message: `${log.item}: ${log.message}`,
+          startLineNumber: log.line,
+          endLineNumber: log.line,
+          startColumn: 0,
+          endColumn: Infinity,
+        };
+      });
 
-    if (bufferName in buffersList) {
-      return buffersList[bufferName];
-    }
-
-    return null;
-  };
-}
-
-export const currentBuffer = (state: any) => {
-  const bufferName = currentBufferName(state);
-
-  return bufferSelectorCreator(bufferName)(state);
-}
-
-export const currentBufferSource = (state: any) => {
-  const buffer = currentBuffer(state);
-
-  return buffer || '';
-}
-
-export const currentBufferErrors = (state: any) => {
-  const name = currentBufferName(state);
-  const allErrors = errors(state);
-
-  return allErrors[name] || [];
-}
+      return {
+        name,
+        source,
+        markers,
+        isActive: currentBufferName === name,
+      };
+    });
+  }
+);

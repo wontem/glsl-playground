@@ -34,8 +34,18 @@ const HeaderInput = styled(Input)`
   outline: none;
 `;
 
+const CanvasWrapper = styled('div')`
+  width: 400px;
+  height: 400px;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+`;
+
 const GLSLViewStyled = styled(GLSLView)`
-  max-width: 400px;
+  max-height: 100%;
+  max-width: 100%;
 `;
 
 class AnimationLoop extends EventEmitter {
@@ -173,11 +183,17 @@ export class View extends React.Component<Props, State> {
 
     this.animationLoop = new AnimationLoop();
     this.animationLoop.on('tick', () => {
+      // if (this.state.isRecording) {
+      //   this.recorder.pause();
+      // }
       this.setState({
         currentTime: performance.now(),
         prevTime: this.state.currentTime,
         currentFrame: this.state.currentFrame + 1,
       });
+      // if (this.state.isRecording) {
+      //   this.recorder.resume();
+      // }
     });
   }
 
@@ -293,57 +309,59 @@ export class View extends React.Component<Props, State> {
             saveImage(this.viewRef.current.getCanvas(), `${this.state.name}_${Date.now()}.png`);
           }} ><MdImage /></StyledIcon>
         </Panel>
-        <GLSLViewStyled
-          textures={this.props.textures}
-          buffers={this.props.buffers}
-          buffersOrder={this.props.buffersOrder}
-          outputBuffer={this.props.outputBuffer}
-          width={this.state.currentWidth * pixelRatio}
-          height={this.state.currentHeight * pixelRatio}
-          onError={this.props.onError}
-          uniforms={[
-            {
-              name: 'u_mouse',
-              method: '2f',
-              value: [...this.state.mouse],
-            },
-            {
-              name: 'u_mouse_start',
-              method: '2f',
-              value: [...this.state.mouseStart],
-            },
-            {
-              name: 'u_mouse_end',
-              method: '2f',
-              value: [...this.state.mouseEnd],
-            },
-            {
-              name: 'u_mouse_pressed',
-              method: '1i',
-              value: [this.state.isMousePressed ? 1 : 0],
-            },
-            {
-              name: 'u_time',
-              method: '1f',
-              value: [time],
-            },
-            {
-              name: 'u_dela_time',
-              method: '1f',
-              value: [(this.state.currentTime - this.state.prevTime) / 1000],
-            },
-            {
-              name: 'u_frame',
-              method: '1i',
-              value: [this.state.currentFrame],
-            }
-          ]}
+        <CanvasWrapper>
+          <GLSLViewStyled
+            textures={this.props.textures}
+            buffers={this.props.buffers}
+            buffersOrder={this.props.buffersOrder}
+            outputBuffer={this.props.outputBuffer}
+            width={this.state.currentWidth * pixelRatio}
+            height={this.state.currentHeight * pixelRatio}
+            onError={this.props.onError}
+            uniforms={[
+              {
+                name: 'u_mouse',
+                method: '2f',
+                value: [...this.state.mouse],
+              },
+              {
+                name: 'u_mouse_start',
+                method: '2f',
+                value: [...this.state.mouseStart],
+              },
+              {
+                name: 'u_mouse_end',
+                method: '2f',
+                value: [...this.state.mouseEnd],
+              },
+              {
+                name: 'u_mouse_pressed',
+                method: '1i',
+                value: [this.state.isMousePressed ? 1 : 0],
+              },
+              {
+                name: 'u_time',
+                method: '1f',
+                value: [time],
+              },
+              {
+                name: 'u_dela_time',
+                method: '1f',
+                value: [(this.state.currentTime - this.state.prevTime) / 1000],
+              },
+              {
+                name: 'u_frame',
+                method: '1i',
+                value: [this.state.currentFrame],
+              }
+            ]}
 
-          onMouseDown={this.onMouseDown}
-          onMouseMove={this.onMouseMove}
-          onMouseUp={this.onMouseUp}
-          ref={this.viewRef}
-        />
+            onMouseDown={this.onMouseDown}
+            onMouseMove={this.onMouseMove}
+            onMouseUp={this.onMouseUp}
+            ref={this.viewRef}
+          />
+        </CanvasWrapper>
         <Panel>
           <HeaderInput
             value={this.state.width}
@@ -384,7 +402,6 @@ export class View extends React.Component<Props, State> {
           <StyledIcon isActive={this.state.isRecording} color='red' onClick={() => {
             if (this.state.isRecording) {
               this.recorder.stop();
-              this.recorder.requestData();
             } else {
               this.recorder.start();
             }

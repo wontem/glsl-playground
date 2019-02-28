@@ -1,20 +1,24 @@
 import { ThunkAction } from 'redux-thunk';
+import * as monaco from 'monaco-editor';
 
 import * as ActionCreators from '../actions/canvasView';
-import { parseLogs } from '../../View/utils/parseLogs';
 
 export interface State {
-  value: string;
 }
 
 export interface OwnProps {
 
 }
 
-export interface StateProps {
+export interface Item {
   name: string;
   source: string;
-  errors: ReturnType<typeof parseLogs>;
+  markers: monaco.editor.IMarkerData[];
+  isActive: boolean;
+};
+
+export interface StateProps {
+  items: Item[];
 }
 
 interface _DispatchProps {
