@@ -12,6 +12,7 @@ interface BufferLink {
 export class View {
   private textures: Map<string, Texture>;
   private buffers: Map<string, BufferLink>;
+  private textureUniforms: Uniform[];
   private buffersOrder: string[];
   private mainProgram: Program;
   private outputBufferName: string;
@@ -22,16 +23,15 @@ export class View {
     this.textures = new Map();
     this.buffers = new Map();
     this.buffersOrder = [];
+    this.textureUniforms = [];
     this.mainProgram = this.createProgram();
   }
 
-  public render(
-    uniforms: Uniform[] = [],
-  ) {
+  private recalculateTextureUniforms() {
     const textures = [...this.textures];
     const buffers = [...this.buffers].map<[string, PingPongFramebuffer]>(([name, { output }]) => [name, output]);
 
-    const textureUniforms: Uniform[] = [
+    this.textureUniforms = [
       ...textures,
       ...buffers,
     ].reduce<Uniform[]>(
@@ -54,18 +54,27 @@ export class View {
       },
       [],
     );
+  }
 
+  public setUniforms(uniforms: Uniform[]) {
     const allUniforms = [
-      ...textureUniforms,
+      ...this.textureUniforms,
       ...uniforms,
     ];
 
+    this.buffers.forEach(({ program }) => {
+      program.setUniforms(allUniforms);
+    });
+
+    this.mainProgram.setUniforms(allUniforms);
+  }
+
+  public render() {
     this.buffersOrder.forEach((bufferName) => {
       const { program, output } = this.buffers.get(bufferName);
 
       program.render(
         output.getResolution(),
-        allUniforms,
         output.getCurrentFramebuffer(),
       );
 
@@ -77,7 +86,6 @@ export class View {
         this.gl.drawingBufferWidth,
         this.gl.drawingBufferHeight,
       ],
-      allUniforms,
       null,
     );
   }
@@ -89,6 +97,7 @@ export class View {
   public createTexture(name: string): void {
     const texture = new Texture(this.gl);
     this.textures.set(name, texture);
+    this.recalculateTextureUniforms();
   }
 
   public updateTexture(
@@ -139,6 +148,7 @@ export class View {
     const output = new PingPongFramebuffer(gl, [gl.drawingBufferWidth, gl.drawingBufferHeight]);
 
     this.buffers.set(bufferName, { program, output });
+    this.recalculateTextureUniforms();
   }
 
   public updateBuffer(bufferName: string, fragmentSource: string): ViewEvent[] {
@@ -193,6 +203,7 @@ export class View {
       bufferLink.program.destroy();
 
       this.buffers.delete(bufferName);
+      this.recalculateTextureUniforms();
     }
 
     if (this.outputBufferName === bufferName) {
@@ -206,6 +217,7 @@ export class View {
     if (texture) {
       texture.destroy();
       this.textures.delete(textureName);
+      this.recalculateTextureUniforms();
     }
   }
 
@@ -214,7 +226,9 @@ export class View {
   }
 
   public destroy(): void {
+    this.textureUniforms = [];
     this.buffersOrder = [];
+
     this.buffers.forEach(({ output, program }) => {
       output.destroy();
       program.destroy();
@@ -222,7 +236,7 @@ export class View {
 
     this.buffers.clear();
 
-    this.textures.forEach((texture, key, textures) => {
+    this.textures.forEach((texture) => {
       texture.destroy();
     });
 

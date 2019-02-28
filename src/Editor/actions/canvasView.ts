@@ -113,12 +113,16 @@ export const createBuffer = (): ThunkResult => (dispatch, getState) => {
 precision mediump float;
 
 out vec4 frag_color;
-uniform sampler2D texture0;
-uniform vec2 channel0_resolution;
+//uniform sampler2D texture0;
+uniform vec2 ${name}_resolution;
+uniform float u_time;
+uniform int u_frame;
 
 void main() {
-    vec2 uv = gl_FragCoord.xy / channel0_resolution;
-    frag_color = texture(texture0, uv);
+    vec2 uv = gl_FragCoord.xy / ${name}_resolution;
+    vec3 color = vec3(0.);
+
+    frag_color = vec4(color, 1.);
 }
 `));
   dispatch(setOutputBuffer(name));

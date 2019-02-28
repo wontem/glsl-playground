@@ -1,6 +1,7 @@
 import * as defaultShaders from './defaultShaders';
 import { getGLSLVersion } from './utils/getGLSLVersion';
 import { ViewEventType, ViewEvent, Uniform, Attribute, Resolution } from './models';
+import { UniformState } from './UniformStore';
 
 function createDefaultProgram(gl: WebGL2RenderingContext) {
   const vertexSource = defaultShaders.getVertexShaderSource(300);
@@ -97,9 +98,27 @@ export class Program {
     }
   }
 
+  private static createProgram(gl: WebGL2RenderingContext, fragmentSource: string, errors: ViewEvent[]): WebGLProgram {
+    const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentSource, errors);
+
+    if (!fragmentShader) {
+      return Program.getDefaultProgram(gl);
+    }
+
+    const version = getGLSLVersion(fragmentSource);
+    const vertexShader = createShader(gl, gl.VERTEX_SHADER, defaultShaders.getVertexShaderSource(version));
+    const program = createProgram(gl, vertexShader, fragmentShader, errors);
+
+    gl.deleteShader(vertexShader);
+    gl.deleteShader(fragmentShader);
+
+    return program || Program.getDefaultProgram(gl);
+  }
+
   private program: WebGLProgram;
   private vao: WebGLVertexArrayObject;
   private fragmentSource: string;
+  private uniformState: UniformState;
 
   constructor(
     private gl: WebGL2RenderingContext,
@@ -108,11 +127,15 @@ export class Program {
     this.fragmentSource = '';
     this.program = Program.getDefaultProgram(gl);
     this.vao = this.createVAO(attributes);
+    this.uniformState = new UniformState(gl);
+  }
+
+  public setUniforms(uniforms: Uniform[]) {
+    this.uniformState.setUniforms(uniforms);
   }
 
   public render(
     [width, height]: Resolution,
-    uniforms: Uniform[],
     framebuffer: WebGLFramebuffer = null,
   ) {
     const gl = this.gl;
@@ -124,25 +147,10 @@ export class Program {
     gl.useProgram(this.program);
     gl.bindVertexArray(this.vao);
 
-    uniforms.forEach(({ method, name, value }) => {
-      this.uniform(method, name, ...value);
-    });
+    this.uniformState.applyUniforms(this.program);
 
     // TODO: make it variable
     gl.drawArrays(gl.TRIANGLES, 0, 6);
-  }
-
-  private uniform(method: string, name: string, ...value: number[]): boolean {
-    const location = this.gl.getUniformLocation(this.program, name);
-
-    if (!location) {
-      return false;
-    }
-
-    // TODO: fix typings
-    (this.gl as any)[`uniform${method}`](location, ...value);
-
-    return true;
   }
 
   private setAttribute(
@@ -173,31 +181,14 @@ export class Program {
     return vao;
   }
 
-  private createProgram(fragmentSource: string, errors: ViewEvent[]): WebGLProgram {
-    const gl = this.gl;
-    const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentSource, errors);
-
-    if (!fragmentShader) {
-      return Program.getDefaultProgram(gl);
-    }
-
-    const version = getGLSLVersion(fragmentSource);
-    const vertexShader = createShader(gl, gl.VERTEX_SHADER, defaultShaders.getVertexShaderSource(version));
-    const program = createProgram(gl, vertexShader, fragmentShader, errors);
-
-    gl.deleteShader(vertexShader);
-    gl.deleteShader(fragmentShader);
-
-    return program || Program.getDefaultProgram(gl);
-  }
-
   public update(fragmentSource: string): ViewEvent[] {
     const errors: ViewEvent[] = [];
 
     if (this.fragmentSource !== fragmentSource) {
       this.destroyProgram();
-      this.program = this.createProgram(fragmentSource, errors);
+      this.program = Program.createProgram(this.gl, fragmentSource, errors);
       this.fragmentSource = fragmentSource;
+      this.uniformState.clear();
     }
 
     return errors;
@@ -208,13 +199,14 @@ export class Program {
       this.gl.deleteProgram(this.program);
     }
 
+    this.uniformState.clear();
     this.program = null;
   }
 
   public destroy(): void {
     this.destroyProgram();
+    this.uniformState = null;
     this.gl.deleteVertexArray(this.vao);
-
     this.vao = null;
   }
 

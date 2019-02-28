@@ -49,7 +49,7 @@ export const Editor: React.FunctionComponent<EditorProps> = ({ children, options
 
 
 interface ModelProps {
-  value: string;
+  initialValue: string;
   isActive: boolean;
   language?: string;
   uri?: monaco.Uri;
@@ -58,13 +58,12 @@ interface ModelProps {
 };
 
 export const Model: React.FunctionComponent<ModelProps> = ({
-  uri, value, isActive, onChange, language, markers,
+  uri, initialValue: value, isActive, onChange, language, markers,
 }) => {
   const [model, setModel] = React.useState<monaco.editor.ITextModel>(null);
   const [viewState, setViewState] = React.useState<monaco.editor.ICodeEditorViewState>(null);
   const editor: monaco.editor.IStandaloneCodeEditor = React.useContext(MonacoContext);
   const actualMarkers: monaco.editor.IMarkerData[] = markers || [];
-  const currentValue = model && model.getValue();
 
   React.useEffect(() => {
     const model = monaco.editor.createModel(value, language, uri);
@@ -98,12 +97,6 @@ export const Model: React.FunctionComponent<ModelProps> = ({
       editor.restoreViewState(viewState);
     }
   }, [isActive]);
-
-  React.useEffect(() => {
-    if (model && currentValue !== value) {
-      model.setValue(value);
-    }
-  }, [currentValue, value]);
 
   React.useEffect(() => {
     if (model) {
