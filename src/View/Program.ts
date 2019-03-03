@@ -3,6 +3,12 @@ import { getGLSLVersion } from './utils/getGLSLVersion';
 import { ViewEventType, ViewEvent, Uniform, Attribute, Resolution } from './models';
 import { UniformState } from './UniformStore';
 
+const defaultAttributes: Attribute[] = [{
+  name: 'a_position',
+  data: [-1.0, -1.0, 1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0, 1.0],
+  size: 2,
+}];
+
 function createDefaultProgram(gl: WebGL2RenderingContext) {
   const vertexSource = defaultShaders.getVertexShaderSource(300);
   const fragmentSource = defaultShaders.getFragmentShaderSource();
@@ -122,7 +128,7 @@ export class Program {
 
   constructor(
     private gl: WebGL2RenderingContext,
-    attributes: Attribute[],
+    attributes: Attribute[] = defaultAttributes,
   ) {
     this.fragmentSource = '';
     this.program = Program.getDefaultProgram(gl);

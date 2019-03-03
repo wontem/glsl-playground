@@ -37,7 +37,7 @@ class TexturesListItem extends React.Component<TexturesListItemProps> {
       <li className={this.props.className}>
         <Name>{this.props.textureName}</Name>
         <Input
-          as='select'
+          use='select'
           value={this.props.textureState.filter}
           onChange={(event: any) => {
             this.props.updateTexture(this.props.textureName, {
@@ -49,9 +49,10 @@ class TexturesListItem extends React.Component<TexturesListItemProps> {
           <option value={Filter.LINEAR}>Linear</option>
           <option value={Filter.NEAREST}>Nearest</option>
           <option value={Filter.MIPMAP}>Mipmap</option>
+          <option value={Filter.BLUR}>Blur</option>
         </Input>
         <Input
-          as='select'
+          use='select'
           value={this.props.textureState.wrap[0]}
           onChange={(event: any) => {
             this.props.updateTexture(this.props.textureName, {
@@ -65,7 +66,7 @@ class TexturesListItem extends React.Component<TexturesListItemProps> {
           <option value={Wrap.MIRROR}>Mirror</option>
         </Input>
         <Input
-          as='select'
+          use='select'
           value={this.props.textureState.wrap[1]}
           onChange={(event: any) => {
             this.props.updateTexture(this.props.textureName, {

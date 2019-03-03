@@ -92,6 +92,13 @@ export class PingPongFramebuffer implements ReadonlyTexture {
     return this.currentFB.getFramebufferObject();
   }
 
+  public getPixelsData(): {
+    pixels: Uint8Array;
+    resolution: Resolution;
+  } {
+    return this.alternativeFB.getPixelsData();
+  }
+
   public activate(): void {
     this.currentFB.activate();
   }

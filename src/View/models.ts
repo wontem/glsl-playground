@@ -24,6 +24,7 @@ export enum Filter {
   LINEAR,
   NEAREST,
   MIPMAP,
+  BLUR,
 }
 
 export enum Wrap {

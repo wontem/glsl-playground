@@ -24,7 +24,7 @@ export class View {
     this.buffers = new Map();
     this.buffersOrder = [];
     this.textureUniforms = [];
-    this.mainProgram = this.createProgram();
+    this.mainProgram = new Program(gl);
   }
 
   private recalculateTextureUniforms() {
@@ -114,6 +114,7 @@ export class View {
         textureUpdate.filter,
         textureUpdate.wrap,
       );
+      this.recalculateTextureUniforms();
     } else {
       if ('filter' in textureUpdate) {
         texture.setFilter(textureUpdate.filter);
@@ -124,18 +125,6 @@ export class View {
     }
   }
 
-  private createProgram(): Program {
-    const gl = this.gl;
-
-    const attributes: Attribute[] = [{
-      name: 'a_position',
-      data: [-1.0, -1.0, 1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0, 1.0],
-      size: 2,
-    }];
-
-    return new Program(gl, attributes);
-  }
-
   public createBuffer(bufferName: string): void {
     const gl = this.gl;
 
@@ -144,7 +133,7 @@ export class View {
       return;
     }
 
-    const program = this.createProgram();
+    const program = new Program(gl);
     const output = new PingPongFramebuffer(gl, [gl.drawingBufferWidth, gl.drawingBufferHeight]);
 
     this.buffers.set(bufferName, { program, output });
@@ -178,6 +167,8 @@ export class View {
 
       gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
     }
+
+    this.recalculateTextureUniforms();
   }
 
   public setBufferToOutput(bufferName: string): void {

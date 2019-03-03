@@ -164,7 +164,6 @@ export class GLSLView extends React.PureComponent<GLSLViewProps> {
 
     isChanged = this.updateBuffers(prevProps.buffers, this.props.buffers) || isChanged;
     isChanged = this.updateTextures(prevProps.textures, this.props.textures) || isChanged;
-    isChanged = this.updateUniforms(prevProps.uniforms, this.props.uniforms) || isChanged;
 
     if (prevProps.outputBuffer !== this.props.outputBuffer) {
       this.view.setBufferToOutput(this.props.outputBuffer);
@@ -183,6 +182,8 @@ export class GLSLView extends React.PureComponent<GLSLViewProps> {
       this.view.resize(this.props.width, this.props.height);
       isChanged = true;
     }
+
+    isChanged = this.updateUniforms(prevProps.uniforms, this.props.uniforms) || isChanged;
 
     if (isChanged) {
       this.view.render();

@@ -264,7 +264,7 @@ export class View extends React.Component<Props, State> {
 
   render() {
     const time = (this.state.currentTime - this.state.startTime) / 1000;
-    const pixelRatio = this.state.isHD ? window.devicePixelRatio : 1.;
+    const pixelRatio = this.state.isHD ? 2. : 1.;
 
     return (
       <React.Fragment>
