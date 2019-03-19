@@ -11,6 +11,7 @@ export const buffersOrder = (state: any) => canvasView(state).buffersOrder;
 export const currentBufferName = (state: any) => canvasView(state).currentBuffer;
 export const outputBuffer = (state: any) => canvasView(state).outputBuffer;
 export const errors = (state: any) => canvasView(state).errors;
+export const projectName = (state: any) => canvasView(state).fileName;
 
 export const bufferNames = (state: any) => {
   const buffersList = buffers(state);

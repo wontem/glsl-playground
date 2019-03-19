@@ -31,6 +31,7 @@ export interface StateProps extends ActionCreators.ProjectData {
 
 interface _DispatchProps {
   setProject: typeof ActionCreators.setProject;
+  setProjectName: typeof ActionCreators.setProjectName;
   onError: typeof ActionCreators.setErrorsForBuffers;
 }
 

@@ -9,6 +9,7 @@ import { DispatchProps, OwnProps, StateProps } from '../components/Editor.models
 
 const mapStateToProps = createStructuredSelector({
   items: Selectors.items,
+  projectName: Selectors.projectName,
 });
 
 const mapDispatchToProps = (dispatch: any) => bindActionCreators(

@@ -279,6 +279,7 @@ export class View extends React.Component<Props, State> {
                 const jsonString = (event.target as FileReader).result as string;
                 const project: ProjectData = JSON.parse(jsonString);
 
+                this.props.setProjectName(file.name);
                 this.props.setProject(project);
                 this.setState({
                   name: /(.*)_\d+\.json/.exec(file.name)[1],

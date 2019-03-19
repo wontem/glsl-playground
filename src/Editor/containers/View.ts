@@ -4,7 +4,7 @@ import { createStructuredSelector } from 'reselect';
 import { View as Component } from '../components/View';
 
 import * as CanvasViewSelectors from '../selectors/canvasView';
-import { setErrorsForBuffers, setProject } from '../actions/canvasView';
+import { setErrorsForBuffers, setProject, setProjectName } from '../actions/canvasView';
 import { DispatchProps, OwnProps, StateProps } from '../components/View.models';
 
 const mapStateToProps = createStructuredSelector({
@@ -18,6 +18,7 @@ const mapDispatchToProps = (dispatch: any) => bindActionCreators(
   {
     onError: setErrorsForBuffers,
     setProject,
+    setProjectName,
   },
   dispatch,
 );

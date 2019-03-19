@@ -19,6 +19,7 @@ export interface State {
   outputBuffer: string;
   buffersOrder: string[];
   errors: Record<string, ReturnType<typeof parseLogs>>;
+  fileName: string;
 }
 
 const initialState: State = {
@@ -28,6 +29,7 @@ const initialState: State = {
   currentBuffer: '',
   outputBuffer: '',
   errors: {},
+  fileName: '',
 };
 
 export const canvasView = handleActions<State, any>(
@@ -37,6 +39,13 @@ export const canvasView = handleActions<State, any>(
         ...action.payload,
         currentBuffer: action.payload.outputBuffer,
         errors: {},
+        fileName: '',
+      };
+    },
+    [ActionTypes.SET_PROJECT_NAME]: (state, action: ReturnType<typeof ActionCreators.setProjectName>): State => {
+      return {
+        ...state,
+        fileName: action.payload,
       }
     },
     [ActionTypes.SET_BUFFERS]: (state, action: ReturnType<typeof ActionCreators.setBuffers>): State => {

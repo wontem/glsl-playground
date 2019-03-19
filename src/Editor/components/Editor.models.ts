@@ -19,6 +19,7 @@ export interface Item {
 
 export interface StateProps {
   items: Item[];
+  projectName: string;
 }
 
 interface _DispatchProps {

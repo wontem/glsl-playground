@@ -33,7 +33,7 @@ export class Editor extends React.Component<Props, State> {
           >
           {this.props.items.map(({ name, source, markers, isActive }) => (
             <MonacoModel
-              key={name} // TODO: use `${projectName}/${name}`
+              key={`${this.props.projectName}/${name}`}
               initialValue={source}
               onChange={(value) => this.props.onChange(name, value)}
               isActive={isActive}

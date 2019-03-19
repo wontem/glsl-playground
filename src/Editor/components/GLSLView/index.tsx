@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { View } from '../../../View';
-import { ViewEvent, Uniform } from '../../../View/models';
+import { ViewEvent, Uniform, Resolution } from '../../../View/models';
 // TODO: move typing into the GLSLView component models
 import { TextureState } from '../../reducers/canvasView';
 import { bitmapLoader } from '../../utils/bitmapLoader';
@@ -124,7 +124,11 @@ export class GLSLView extends React.PureComponent<GLSLViewProps> {
     return true;
   }
 
-  private updateTexture = async (name: string, { url, ...textureState }: TextureState) => {
+  // private updateTexture = async (name: string, { url, ...textureState }: TextureState) => {
+
+  // };
+
+  private updateTextureBitmap = async (name: string, { url, ...textureState }: TextureState) => {
     try {
       const bitmap = await bitmapLoader.download(name, url, { imageOrientation: textureState.flipY ? 'flipY' : 'none' });
       this.view.updateTexture(name, {
@@ -134,21 +138,51 @@ export class GLSLView extends React.PureComponent<GLSLViewProps> {
 
       bitmap.close();
 
-      this.view.render();
+      // this.view.render();
     } catch (error) {
       console.error(error);
     }
-  };
+  }
+
+  // private useCameraForTexture = async (name: string) => {
+  //   try {
+  //     const mediaStream = await navigator.mediaDevices.getUserMedia({ video: true });
+  //     const resolution: Resolution = [
+  //       mediaStream.getVideoTracks()[0].getSettings().width,
+  //       mediaStream.getVideoTracks()[0].getSettings().height,
+  //     ];
+
+  //     const video = document.createElement('video');
+  //     video.srcObject = mediaStream;
+  //     video.onloadedmetadata = (e) => {
+  //       video.play();
+
+  //       setTimeout(() => video.pause(), 5000);
+
+  //       const anim = () => {
+  //         this.view.updateTexture(name, {
+  //           source: video,
+  //           resolution,
+  //         });
+  //         requestAnimationFrame(anim);
+  //       };
+
+  //       requestAnimationFrame(anim);
+  //     };
+  //   } catch (error) {
+  //     console.error(error);
+  //   }
+  // }
 
   private updateTextures(
     prevTextures: Record<string, TextureState>,
     currentTextures: Record<string, TextureState>,
   ): boolean {
     const isChanged = diffObjects(prevTextures, currentTextures, {
-      update: this.updateTexture,
+      update: this.updateTextureBitmap,
       create: async (name, texture) => {
         this.view.createTexture(name);
-        this.updateTexture(name, texture);
+        this.updateTextureBitmap(name, texture);
       },
       delete: (name) => {
         bitmapLoader.abort(name);

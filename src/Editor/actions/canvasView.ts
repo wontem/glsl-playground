@@ -19,6 +19,7 @@ export interface ProjectData {
 };
 
 export const setProject = createAction(ActionTypes.SET_PROJECT, (projectData: ProjectData) => projectData);
+export const setProjectName = createAction(ActionTypes.SET_PROJECT_NAME, (name: string) => name);
 export const setOutputBuffer = createAction(ActionTypes.SET_OUTPUT_BUFFER, (name: string) => name);
 export const selectBuffer = createAction(ActionTypes.SELECT_BUFFER, (name: string) => name);
 export const setBuffers = createAction(ActionTypes.SET_BUFFERS, (buffers: Record<string, string>) => buffers);
