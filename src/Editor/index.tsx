@@ -1,18 +1,20 @@
 import * as React from 'react';
-import { Provider } from 'react-redux';
 import { render } from 'react-dom';
+// import { Provider } from 'react-redux';
+// import { store } from './store';
 
-import { store } from './store';
-import { App } from './components/App';
+// import { App } from './components/App';
+import { GraphView } from '../GraphView/GraphView';
 
 const root = document.body.appendChild(document.createElement('div'));
 root.id = 'root';
 
 render(
   (
-    <Provider store={store}>
-      <App />
-    </Provider>
+    // <Provider store={store}>
+    //   <App />
+    // </Provider>
+    <GraphView/>
   ),
   root,
 );
