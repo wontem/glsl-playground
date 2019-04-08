@@ -7,11 +7,11 @@ import { GraphStore } from '../stores/GraphStore';
 import { Node } from './Node';
 import { Link } from './Link';
 import { LinkRaw } from './LinkRaw';
-import { PortType } from '../constants';
+import { PortType, Tool, PortDataType } from '../constants';
 import { ViewStateStore } from '../stores/ViewStateStore';
 import { PortStore } from '../stores/PortStore';
-
-const clamp = (a: number, b: number, x: number): number => x < a ? a : x > b ? b : x;
+import { NodeTemplate } from '../types';
+import { PrioritizedArray } from '../helpers/PrioritizedArray';
 
 interface Props {
   graph: GraphStore;
@@ -22,7 +22,7 @@ interface Props {
 export class Patch extends React.Component<Props> {
   private svgElement: React.RefObject<SVGSVGElement> = React.createRef();
 
-  mouseCoordinate(e: React.MouseEvent<SVGSVGElement>): [number, number] {
+  mouseCoordinate(e: React.MouseEvent): [number, number] {
     const rect = this.svgElement.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
@@ -32,58 +32,108 @@ export class Patch extends React.Component<Props> {
 
   @action onDoubleClick: React.MouseEventHandler<SVGSVGElement> = (e) => {
     const [x, y] = this.props.viewState.toCanvasCoordinate(this.mouseCoordinate(e));
-    this.props.graph.addNode(x, y);
+
+    const templates: NodeTemplate[] = [
+      {
+        inputs: [
+          PortDataType.TRIGGER,
+          PortDataType.VEC2,
+          PortDataType.VEC2,
+          PortDataType.VEC3,
+          PortDataType.INT,
+          PortDataType.FLOAT,
+          PortDataType.TEXTURE,
+          PortDataType.TEXTURE,
+        ],
+        outputs: [
+          PortDataType.TRIGGER,
+          PortDataType.VEC3,
+          PortDataType.INT,
+          PortDataType.FLOAT,
+          PortDataType.TEXTURE,
+        ],
+      },
+      {
+        inputs: [
+          PortDataType.TRIGGER,
+          PortDataType.VEC2,
+          PortDataType.BOOL,
+          PortDataType.VEC2,
+          PortDataType.INT,
+          PortDataType.FLOAT,
+          PortDataType.TEXTURE,
+        ],
+        outputs: [
+          PortDataType.TRIGGER,
+          PortDataType.VEC3,
+          PortDataType.INT,
+          PortDataType.FLOAT,
+          PortDataType.BOOL,
+          PortDataType.TEXTURE,
+        ],
+      },
+      {
+        inputs: [
+          PortDataType.TRIGGER,
+          PortDataType.VEC2,
+          PortDataType.VEC2,
+          PortDataType.TEXTURE,
+        ],
+        outputs: [
+          PortDataType.TRIGGER,
+          PortDataType.VEC3,
+          PortDataType.BOOL,
+          PortDataType.TEXTURE,
+        ],
+      },
+    ];
+
+    this.props.graph.addNodeFromTemplate(x, y, templates[Math.floor(Math.random() * templates.length)]);
+    // this.props.viewState.draggingItem = node;
+    // this.props.viewState.selectedNodes.clear();
+    // this.props.viewState.selectedNodes.add(node);
+    // this.props.viewState.isMouseDown = true;
+    // this.props.viewState.isDragging = true;
   }
 
   @action onWheel: React.WheelEventHandler<SVGSVGElement> = (e) => {
-    e.preventDefault();
+    // TODO: Unable to preventDefault inside passive event listener due to target being treated as passive.
+    // e.preventDefault();
     this.props.viewState.onZoom(this.mouseCoordinate(e), e.deltaY);
   }
 
-  @action onMouseDown: React.MouseEventHandler<SVGSVGElement> = (e) => {
-    this.props.viewState.onMouseDown(this.mouseCoordinate(e));
+  @action onMouseEnter = (e: React.MouseEvent, item?: any) => {
+    this.props.viewState.onMouseEnter(item);
   }
 
-  @action onMouseUp: React.MouseEventHandler<SVGSVGElement> = (e) => {
-    this.props.viewState.onMouseUp();
-  }
-
-  @action onMouseLeave: React.MouseEventHandler<SVGSVGElement> = (e) => {
-
+  @action onMouseLeave = (e: React.MouseEvent, item?: any) => {
+    this.props.viewState.onMouseLeave(item);
   }
 
   @action onMouseMove: React.MouseEventHandler<SVGSVGElement> = (e) => {
     this.props.viewState.onMouseMove(this.mouseCoordinate(e));
   }
 
-  @action onItemMouseDown = (
-    e: React.MouseEvent<SVGRectElement>,
-    item: any,
-  ): void => {
-    this.props.viewState.onItemMouseDown(item);
-  }
-
-  @action
-  onItemMouseUp = (
-    e: React.MouseEvent<SVGRectElement>,
-    item: any,
-  ): void => {
+  @action onMouseDown = (e: React.MouseEvent, item?: any): void => {
     e.stopPropagation();
-
-    this.props.viewState.onItemMouseUp(item);
+    this.props.viewState.onMouseDown(this.mouseCoordinate(e), item, e.shiftKey);
   }
 
+  @action onMouseUp = (e: React.MouseEvent, item?: any): void => {
+    e.stopPropagation();
+    this.props.viewState.onMouseUp(this.mouseCoordinate(e), item);
+  }
 
   renderTempLink(): JSX.Element {
     if (this.props.viewState.isDragging && this.props.viewState.draggingItem instanceof PortStore) {
       const port = this.props.viewState.draggingItem;
       const from: [number, number] = [port.x, port.y];
-      const to: [number, number] = this.props.viewState.canvasPrevMousePos;
+      const to: [number, number] = this.props.viewState.toCanvasCoordinate(this.props.viewState.prevMousePos);
 
       return port.type === PortType.OUTPUT ? (
-        <LinkRaw fromPoint={from} toPoint={to} color={port.color} />
+        <LinkRaw fromPoint={from} toPoint={to} color={port.color} ignorePointerEvents />
       ) : (
-        <LinkRaw fromPoint={to} toPoint={from} color={port.color} />
+          <LinkRaw fromPoint={to} toPoint={from} color={port.color} ignorePointerEvents />
       );
     }
 
@@ -91,32 +141,42 @@ export class Patch extends React.Component<Props> {
   }
 
   render() {
-    const nodes: JSX.Element[] = [];
-    const links: JSX.Element[] = [];
-
+    const nodes: PrioritizedArray<JSX.Element, number> = new PrioritizedArray();
+    const links: PrioritizedArray<JSX.Element, number> = new PrioritizedArray();
     const shouldDisableLinks = this.props.viewState.isMouseDown && this.props.viewState.draggingItem instanceof PortStore;
 
     this.props.graph.nodes.forEach((node, id) => {
-      nodes.push(
+      const isSelected = this.props.viewState.selectedNodes.has(node);
+      nodes.push(isSelected ? 1 : 0,
         <Node
           key={id}
           node={node}
-          onMouseDown={this.onItemMouseDown}
-          onMouseUp={this.onItemMouseUp}
+          onMouseDown={this.onMouseDown}
+          onMouseUp={this.onMouseUp}
+          onMouseEnter={this.onMouseEnter}
+          onMouseLeave={this.onMouseLeave}
           currentItem={this.props.viewState.draggingItem}
-          isSelected={this.props.viewState.selectedNode === node}
+          isSelected={isSelected}
         />
       );
     });
 
     this.props.graph.links.forEach((link, id) => {
-      links.push(
+      const selectedNodes = this.props.viewState.selectedNodes;
+      const isHovered = this.props.viewState.hoveredItem === link;
+      const isHighlighted = !shouldDisableLinks && (selectedNodes.size === 0 || selectedNodes.has(link.out.node) || selectedNodes.has(link.in.node));
+
+      links.push(isHovered ? 2 : isHighlighted ? 1 : 0,
         <Link
           key={id}
           link={link}
-          isDisabled={shouldDisableLinks}
+          isHovered={isHovered}
+          isHighlighted={isHighlighted}
+          onMouseEnter={this.onMouseEnter}
+          onMouseLeave={this.onMouseLeave}
+          onMouseDown={this.onMouseDown}
         />
-      )
+      );
     });
 
     const tempLink = this.renderTempLink();
@@ -124,9 +184,24 @@ export class Patch extends React.Component<Props> {
     return (
       <HotKeys keyMap={{
         center: 'c',
-        // delete: 'backspace',
+        delete: ['del', 'backspace'],
+        changeTool: 't',
+        groupNodes: 'cmd+g',
       }} handlers={{
-        center: () => this.props.viewState.centerBox(this.svgElement.current.getBBox()),
+        center: action(() => this.props.viewState.centerBox(this.svgElement.current.getBBox())),
+        delete: action(() => {
+          this.props.viewState.selectedNodes.forEach(node => node.delete());
+          this.props.viewState.selectedNodes.clear();
+        }),
+        changeTool: action(() => {
+          this.props.viewState.tool = this.props.viewState.tool === Tool.PAN ? Tool.SELECT : Tool.PAN;
+        }),
+        groupNodes: action((e: any) => {
+          e.preventDefault();
+          if (this.props.viewState.selectedNodes.size > 1) {
+            this.props.graph.groupNodes(this.props.viewState.selectedNodes);
+          }
+        }),
       }} style={{
         position: 'absolute',
         outline: 'none',
@@ -151,19 +226,22 @@ export class Patch extends React.Component<Props> {
           onMouseDown={this.onMouseDown}
           onMouseMove={this.onMouseMove}
           onMouseUp={this.onMouseUp}
-          onMouseLeave={this.onMouseLeave}
         >
-          {/* <g id='coord-syst'>
-            <line x1='-4' x2='4' y1='0' y2='0' stroke="white" strokeWidth="2" />
-            <line x1='0' x2='0' y1='-4' y2='4' stroke="white" strokeWidth="2" />
-          </g> */}
-          {/* <g style={{
-            opacity: this.props.viewState.isMouseDown && this.props.viewState.draggingItem instanceof PortStore ? .3 : 1,
-          }}> */}
-          {links}
-          {/* </g> */}
+          {links.toArray()}
           {tempLink}
-          {nodes}
+          {nodes.toArray()}
+          {this.props.viewState.isSelectionActive ? (
+            <rect
+              x={this.props.viewState.selectionStart[0]}
+              y={this.props.viewState.selectionStart[1]}
+              width={this.props.viewState.selectionSize[0]}
+              height={this.props.viewState.selectionSize[1]}
+              fill='hsla(0, 0%, 100%, .3)'
+              stroke='hsla(0, 0%, 100%, 1)'
+              strokeWidth={1}
+              pointerEvents='none'
+            />
+          ) : null}
         </svg>
       </HotKeys>
     );

@@ -13,7 +13,7 @@ interface EditorProps {
   options?: monaco.editor.IEditorConstructionOptions;
 }
 
-export const Editor: React.FunctionComponent<EditorProps> = ({ children, options }) => {
+export const Editor: React.FC<EditorProps> = ({ children, options }) => {
   const container: React.Ref<HTMLDivElement> = React.useRef(null);
   const [editor, setEditor] = React.useState<monaco.editor.IStandaloneCodeEditor>(null);
 
@@ -57,7 +57,7 @@ interface ModelProps {
   onChange: (value: string) => void;
 };
 
-export const Model: React.FunctionComponent<ModelProps> = ({
+export const Model: React.FC<ModelProps> = ({
   uri, initialValue: value, isActive, onChange, language, markers,
 }) => {
   const [model, setModel] = React.useState<monaco.editor.ITextModel>(null);

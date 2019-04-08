@@ -5,7 +5,7 @@ import { Patch } from '../GraphView/components/Patch';
 import { ViewStateStore } from './stores/ViewStateStore';
 
 const graph = new GraphStore();
-const viewState = new ViewStateStore();
+const viewState = new ViewStateStore(graph);
 
 viewState.width = 1024;
 viewState.height = 640;

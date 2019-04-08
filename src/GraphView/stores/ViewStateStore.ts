@@ -2,33 +2,52 @@ import { observable, computed, action } from 'mobx';
 
 import { NodeStore } from './NodeStore';
 import { PortStore } from './PortStore';
-import { MIN_SCALE, MAX_SCALE, ZOOM_FACTOR, PortType, CENTER_PADDING } from '../constants';
+import { MIN_SCALE, MAX_SCALE, ZOOM_FACTOR, PortType, CENTER_PADDING, Tool } from '../constants';
 import { fork } from '../helpers/fork';
-
-const clamp = (a: number, b: number, x: number): number => x < a ? a : x > b ? b : x;
+import { GraphStore } from './GraphStore';
+import { clamp } from '../helpers/clamp';
 
 export class ViewStateStore {
+  constructor(private graph: GraphStore) {}
+
+  @observable tool: Tool = Tool.SELECT;
+
+  @observable isSelectionActive: boolean = false;
+  @observable private selectionFrom: [number, number] = null;
+  @observable private selectionTo: [number, number] = null;
+
+  @observable hoveredItem: any;
+
+  @computed get selectionStart(): [number, number] {
+    return [
+      Math.min(this.selectionFrom[0], this.selectionTo[0]),
+      Math.min(this.selectionFrom[1], this.selectionTo[1]),
+    ];
+  }
+
+  @computed get selectionSize(): [number, number] {
+    return [
+      Math.abs(this.selectionTo[0] - this.selectionFrom[0]),
+      Math.abs(this.selectionTo[1] - this.selectionFrom[1]),
+    ];
+  }
+
   @observable width: number;
   @observable height: number;
   @observable private _scale: number = 1;
 
-  @observable selectedNode: NodeStore = null;
-
-  @observable draggingItem: any = null;
+  @observable selectedNodes: Set<NodeStore> = new Set();
+  @observable draggingItem: any;
 
   @observable translateX: number = 0;
   @observable translateY: number = 0;
 
-  @observable isMouseDown: boolean = false;
-  @observable isDragging: boolean = false;
+  @observable isMouseDown: boolean;
+  @observable isDragging: boolean;
   @observable prevMousePos: [number, number];
 
   @computed get scale(): number {
     return this._scale;
-  }
-
-  @computed get canvasPrevMousePos(): [number, number] {
-    return this.toCanvasCoordinate(this.prevMousePos);
   }
 
   @computed get viewBox(): string {
@@ -46,23 +65,30 @@ export class ViewStateStore {
     this._scale = clamp(MIN_SCALE, MAX_SCALE, scale);
   }
 
-  @action onMouseDown(mousePos: [number, number]) {
-    this.isMouseDown = true;
-    this.prevMousePos = mousePos;
+  @action onMouseEnter(item: any) {
+    if (this.isDragging) {
+      return;
+    }
+
+    fork(item, {
+      port: port => this.hoveredItem = port,
+      link: link => this.hoveredItem = link,
+      node: node => this.hoveredItem = node,
+    });
+  }
+
+  @action onMouseLeave(item?: any) {
+    if (this.isDragging) {
+      return;
+    }
+
+    this.hoveredItem = null;
   }
 
   @action resetDragState() {
     this.isDragging = false;
     this.isMouseDown = false;
     this.draggingItem = null;
-  }
-
-  @action onMouseUp() {
-    if (!this.isDragging) {
-      this.selectedNode = null;
-    }
-
-    this.resetDragState();
   }
 
   @action onMouseMove(currentMousePos: [number, number]) {
@@ -78,13 +104,32 @@ export class ViewStateStore {
     ];
 
     fork(this.draggingItem, {
-      node: (node) => {
-        node.x += translateX;
-        node.y += translateY;
+      node: () => {
+        this.selectedNodes.forEach(node => {
+          node.x += translateX;
+          node.y += translateY;
+        });
       },
       default: () => {
-        this.translateX -= translateX;
-        this.translateY -= translateY;
+        if (this.tool === Tool.PAN) {
+          this.translateX -= translateX;
+          this.translateY -= translateY;
+        } else if (this.tool === Tool.SELECT && this.isSelectionActive) {
+          this.selectionTo = this.toCanvasCoordinate(currentMousePos);
+
+          this.selectedNodes.clear();
+
+          this.graph.nodes.forEach(node => {
+            if (
+              (this.selectionStart[0] < node.x + node.width) &&
+              (this.selectionStart[1] < node.y + node.height) &&
+              (this.selectionStart[0] + this.selectionSize[0] > node.x) &&
+              (this.selectionStart[1] + this.selectionSize[1] > node.y)
+            ) {
+              this.selectedNodes.add(node);
+            }
+          });
+        }
       }
     });
 
@@ -101,18 +146,48 @@ export class ViewStateStore {
     this.translateY = (this.translateY - cY) * oldScale / this.scale + cY;
   }
 
-  @action onItemMouseDown(item: any): void {
-    this.draggingItem = item;
-  }
+  @action onMouseDown(mousePos: [number, number], item?: any, shouldAdd?: boolean): void {
+    this.isMouseDown = true;
+    this.prevMousePos = mousePos;
 
-  @action onItemMouseUp(item: any): void {
     fork(item, {
-      node: (node) => {
-        if (!this.isDragging) {
-          this.selectedNode = node;
+      link: link => {
+        link.delete();
+      },
+      node: node => {
+        this.draggingItem = node;
+
+        if (shouldAdd) {
+          this.selectedNodes.has(node) ? this.selectedNodes.delete(node) : this.selectedNodes.add(node);
+        } else if (!this.selectedNodes.has(node)) {
+          this.selectedNodes.clear();
+          this.selectedNodes.add(node);
         }
       },
-      port: (port) => {
+      port: port => {
+        this.draggingItem = port;
+      },
+      default: () => {
+        if (this.tool === Tool.SELECT) {
+          this.selectionFrom = this.toCanvasCoordinate(mousePos);
+          this.selectionTo = this.selectionFrom;
+          this.isSelectionActive = true;
+        }
+
+        this.selectedNodes.clear();
+      }
+    });
+  }
+
+  @action onMouseUp(mousePos: [number, number], item?: any): void {
+    fork(item, {
+      // node: (node) => {
+      //   if (!this.isDragging && this.selectedNodes.size > 1 && this.selectedNodes.has(node)) {
+      //     this.selectedNodes.clear();
+      //     this.selectedNodes.add(node);
+      //   }
+      // },
+      port: port => {
         if (
           this.draggingItem instanceof PortStore &&
           this.draggingItem.type !== port.type &&
@@ -124,10 +199,21 @@ export class ViewStateStore {
           // TODO: non-view-state side-effect
           from.link(to);
         }
+      },
+      default: () => {
+        // if (!this.isDragging) {
+        //   this.selectedNode = null;
+        // }
       }
     });
 
-    this.resetDragState();
+    this.isDragging = false;
+    this.isMouseDown = false;
+    this.draggingItem = null;
+
+    this.selectionFrom = null;
+    this.selectionTo = null;
+    this.isSelectionActive = false;
   }
 
   @action centerBox = (box: Record<'width' | 'height' | 'x' | 'y', number>): void => {

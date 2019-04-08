@@ -9,10 +9,29 @@ export const PORT_WIDTH = 10;
 export const PORT_HEIGHT = 6;
 export const PORT_STEP = 2;
 
+export const WIRE_WIDTH = 2;
+
+export enum Tool {
+  SELECT,
+  PAN,
+}
+
 export enum PortType {
   INPUT,
   OUTPUT,
 };
+
+export enum NodeType {
+  DEFAULT,
+  GROUP,
+  GROUP_INPUTS,
+  GROUP_OUTPUTS,
+}
+
+// export enum LinkType {
+//   CONNECTION,
+//   EXTENSION,
+// }
 
 export enum PortDataType {
   TRIGGER = 'trigger',
@@ -28,12 +47,12 @@ export enum PortDataType {
 const step = 360 / 8;
 
 export const PortColors: Record<PortDataType, string> = {
-  [PortDataType.TRIGGER]: `hsl(${step * 0 + 20}, 100%, 50%)`,
-  [PortDataType.TEXTURE]: `hsl(${step * 1 + 20}, 100%, 50%)`,
-  [PortDataType.BOOL]: `hsl(${step * 2 + 20}, 100%, 50%)`,
-  [PortDataType.FLOAT]: `hsl(${step * 3 + 20}, 100%, 50%)`,
-  [PortDataType.INT]: `hsl(${step * 4 + 20}, 100%, 50%)`,
-  [PortDataType.VEC2]: `hsl(${step * 5 + 20}, 100%, 50%)`,
-  [PortDataType.VEC3]: `hsl(${step * 6 + 20}, 100%, 50%)`,
-  [PortDataType.VEC4]: `hsl(${step * 7 + 20}, 100%, 50%)`,
+  [PortDataType.TRIGGER]: `hsl(${step * 0 - 10}, 100%, 60%)`,
+  [PortDataType.TEXTURE]: `hsl(${step * 1 - 10}, 100%, 60%)`,
+  [PortDataType.BOOL]: `hsl(${step * 2 - 10}, 100%, 60%)`,
+  [PortDataType.FLOAT]: `hsl(${step * 3 - 10}, 100%, 60%)`,
+  [PortDataType.INT]: `hsl(${step * 4 - 10}, 100%, 60%)`,
+  [PortDataType.VEC2]: `hsl(${step * 5 - 10}, 100%, 60%)`,
+  [PortDataType.VEC3]: `hsl(${step * 6 - 10}, 100%, 60%)`,
+  [PortDataType.VEC4]: `hsl(${step * 7 - 10}, 100%, 60%)`,
 };

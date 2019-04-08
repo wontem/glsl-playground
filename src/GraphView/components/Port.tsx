@@ -8,6 +8,8 @@ interface PortProps {
   port: PortStore;
   onMouseDown: (e: React.MouseEvent, item: any) => void;
   onMouseUp: (e: React.MouseEvent, item: any) => void;
+  onMouseEnter: (e: React.MouseEvent, item: any) => void;
+  onMouseLeave: (e: React.MouseEvent, item: any) => void;
   isDisabled?: boolean;
 }
 
@@ -25,7 +27,19 @@ export class Port extends React.Component<PortProps, never> {
         fill={isDisabled ? '#333' : port.color}
         onMouseDown={(e) => this.props.onMouseDown(e, port)}
         onMouseUp={(e) => !isDisabled && this.props.onMouseUp(e, port)}
+        onMouseEnter={(e) => !isDisabled && this.props.onMouseEnter(e, port)}
+        onMouseLeave={(e) => !isDisabled && this.props.onMouseLeave(e, port)}
       />
+      // <circle
+      //   cx={port.relX}
+      //   cy={port.relY}
+      //   r={PORT_WIDTH / 2}
+      //   fill={isDisabled ? '#333' : port.color}
+      //   onMouseDown={(e) => this.props.onMouseDown(e, port)}
+      //   onMouseUp={(e) => !isDisabled && this.props.onMouseUp(e, port)}
+      //   onMouseEnter={(e) => !isDisabled && this.props.onMouseEnter(e, port)}
+      //   onMouseLeave={(e) => !isDisabled && this.props.onMouseLeave(e, port)}
+      // />
     );
   }
 }

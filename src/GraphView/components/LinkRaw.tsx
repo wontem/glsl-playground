@@ -1,15 +1,29 @@
 import * as React from 'react';
+import { WIRE_WIDTH } from '../constants';
 
 interface LinkRawProps {
   fromPoint: [number, number];
   toPoint: [number, number];
   color: string;
+  // zTranslate?: number;
+
+  width?: number;
+  onMouseEnter?: (e: React.MouseEvent) => void;
+  onMouseLeave?: (e: React.MouseEvent) => void;
+  onMouseDown?: (e: React.MouseEvent) => void;
+  ignorePointerEvents?: boolean;
 }
 
 export const LinkRaw: React.FC<LinkRawProps> = ({
   fromPoint,
   toPoint,
   color,
+  // zTranslate,
+  width = WIRE_WIDTH,
+  onMouseEnter,
+  onMouseLeave,
+  onMouseDown,
+  ignorePointerEvents,
 }) => {
   // const isToUnderFrom = fromPoint[1] < toPoint[1];
   const dX = Math.min(Math.abs(toPoint[0] - fromPoint[0]), 50);
@@ -28,8 +42,15 @@ export const LinkRaw: React.FC<LinkRawProps> = ({
       d={d}
       stroke={color}
       fill="transparent"
-      strokeWidth={2}
+      strokeWidth={width}
       strokeLinecap="round"
+      pointerEvents={ignorePointerEvents ? 'none' : 'stroke'}
+      // strokeDasharray='50% 10'
+      // strokeDashoffset={}
+      // z={zTranslate || 0 + 1}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+      onMouseDown={onMouseDown}
     />
   );
 }
