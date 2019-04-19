@@ -11,6 +11,7 @@ interface PortProps {
   onMouseEnter: (e: React.MouseEvent, item: any) => void;
   onMouseLeave: (e: React.MouseEvent, item: any) => void;
   isDisabled?: boolean;
+  forceColor?: string;
 }
 
 @observer
@@ -24,7 +25,7 @@ export class Port extends React.Component<PortProps, never> {
         y={port.relY - PORT_HEIGHT / 2}
         width={PORT_WIDTH}
         height={PORT_HEIGHT}
-        fill={isDisabled ? '#333' : port.color}
+        fill={this.props.forceColor || (isDisabled ? '#333' : port.color)}
         onMouseDown={(e) => this.props.onMouseDown(e, port)}
         onMouseUp={(e) => !isDisabled && this.props.onMouseUp(e, port)}
         onMouseEnter={(e) => !isDisabled && this.props.onMouseEnter(e, port)}

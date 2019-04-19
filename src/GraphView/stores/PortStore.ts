@@ -1,4 +1,4 @@
-import { observable, computed, action } from 'mobx';
+import { observable, action } from 'mobx';
 import * as uuid from 'uuid/v4';
 
 import { NodeStore } from './NodeStore';
@@ -12,41 +12,44 @@ export class PortStore<T extends PortType = PortType> {
   @observable label: string = '';
 
   constructor(
-    private graph: GraphStore,
     readonly node: NodeStore,
     readonly type: T,
     readonly dataType: PortDataType,
-  ) {}
+  ) { }
 
   get color(): string {
     return PortColors[this.dataType];
   };
 
-  @computed get index() {
+  get graph(): GraphStore {
+    return this.node.graph;
+  }
+
+  get index(): number {
     return this.node.getPortIndex(this.id);
   }
 
-  @computed get relX() {
+  get relX(): number {
     return (PORT_WIDTH + PORT_STEP) * this.index + 0.5 * PORT_WIDTH;
   }
 
-  @computed get relY() {
+  get relY(): number {
     return this.type === PortType.OUTPUT ? NODE_HEIGHT + PORT_HEIGHT / 2 : -PORT_HEIGHT / 2;
   }
 
-  @computed get x() {
+  get x(): number {
     return this.node.x + this.relX;
   }
 
-  @computed get y() {
+  get y(): number {
     return this.node.y + this.relY;
   }
 
-  @computed get links(): Set<LinkStore> {
+  get links(): Set<LinkStore> {
     return this.graph.portToLinks.get(this);
   }
 
-  @computed get linkedPorts(): Set<PortStore> {
+  get linkedPorts(): Set<PortStore> {
     return this.graph.portToPorts.get(this);
   }
 
@@ -54,11 +57,15 @@ export class PortStore<T extends PortType = PortType> {
     return this.graph.checkPortsLink(this, port);
   }
 
-  @action link(port: PortStore): void {
-    this.graph.addLink(this, port);
+  @action link(port: PortStore<PortType.INPUT>): void {
+    if (this.type === PortType.OUTPUT) {
+      this.graph.addLink(this as PortStore<PortType.OUTPUT>, port);
+    } else {
+      console.error('wrong types');
+    }
   }
 
-  @action unlink(port: PortStore) {
+  @action unlink(port: PortStore): void {
     if (this.graph.portToLinks.has(port)) {
       for (const link of this.graph.portToLinks.get(this)) {
         const anotherPort = port.type === PortType.INPUT ? link.out : link.in;
@@ -74,7 +81,7 @@ export class PortStore<T extends PortType = PortType> {
     this.linkedPorts && this.linkedPorts.forEach(port => this.unlink(port));
   }
 
-  @action delete() {
+  @action delete(): void {
     this.unlinkAll();
     this.node.ports.delete(this.id);
   }

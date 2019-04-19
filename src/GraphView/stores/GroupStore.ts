@@ -1,13 +1,19 @@
-import { NodeStore } from './NodeStore';
 import { GraphStore } from './GraphStore';
+import { NodeStore } from './NodeStore';
+import { PortStore } from './PortStore';
 import { NodeType } from '../constants';
+import { GroupIOStore } from './GroupIOStore';
 
 export class GroupStore extends NodeStore {
   groupGraph: GraphStore = new GraphStore();
+  inputsNode: GroupIOStore = new GroupIOStore(this, NodeType.GROUP_INPUTS);
+  outputsNode: GroupIOStore = new GroupIOStore(this, NodeType.GROUP_OUTPUTS);
+  portPortals: Map<PortStore, PortStore> = new Map();
 
-  constructor(graph: GraphStore) {
-    super(graph, NodeType.GROUP);
+  constructor() {
+    super(NodeType.GROUP);
 
-    const inputNode = new NodeStore(graph, NodeType.GROUP_INPUTS);
+    this.groupGraph.bindNode(this.inputsNode);
+    this.groupGraph.bindNode(this.outputsNode);
   }
 }

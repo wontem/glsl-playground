@@ -1,6 +1,12 @@
 import { PortDataType } from './constants';
 
+interface PortTemplate {
+  type: PortDataType;
+  label?: string;
+}
+
 export interface NodeTemplate {
-  inputs: PortDataType[];
-  outputs: PortDataType[];
+  label?: string;
+  inputs: PortTemplate[];
+  outputs: PortTemplate[];
 }

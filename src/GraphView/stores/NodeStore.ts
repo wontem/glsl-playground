@@ -2,47 +2,72 @@ import { observable, computed, action } from 'mobx';
 import * as uuid from 'uuid/v4';
 
 import { PortStore } from './PortStore';
-import { PortType, NODE_HEIGHT, NodeType } from '../constants';
+import { PortType, NODE_HEIGHT, NodeType, PORT_WIDTH, PORT_STEP, NODE_MIN_WIDTH } from '../constants';
 import { GraphStore } from './GraphStore';
 import { NodeTemplate } from '../types';
 
 export class NodeStore {
-  static fromTemplate(graph: GraphStore, template: NodeTemplate): NodeStore {
-    const node = new NodeStore(graph);
+  static fromTemplate(template: NodeTemplate): NodeStore {
+    const node = new NodeStore();
+    if (typeof template.label === 'string') {
+      node.label = template.label;
+    }
 
-    template.inputs.forEach(portDataType => {
-      node.addPort(new PortStore(graph, node, PortType.INPUT, portDataType));
+    template.inputs.forEach(portTemplate => {
+      const port = new PortStore(node, PortType.INPUT, portTemplate.type);
+      if (typeof portTemplate.label === 'string') {
+        port.label = portTemplate.label;
+      }
+      node.addPort(port);
     });
 
-    template.outputs.forEach(portDataType => {
-      node.addPort(new PortStore(graph, node, PortType.OUTPUT, portDataType));
+    template.outputs.forEach(portTemplate => {
+      const port = new PortStore(node, PortType.OUTPUT, portTemplate.type);
+      if (typeof portTemplate.label === 'string') {
+        port.label = portTemplate.label;
+      }
+      node.addPort(port);
     });
 
     return node;
   }
 
   id: Readonly<string> = uuid();
+  @observable graph: GraphStore = null;
   @observable x: number = 0;
   @observable y: number = 0;
   @observable label: string = '';
   @observable color: string = '';
   @observable ports: Map<string, PortStore> = new Map();
 
-  @computed private get inputs(): string[] {
-    return [...this.ports].filter(([id, { type }]) => type === PortType.INPUT).map(([id]) => id);
+  @computed protected get inputs(): string[] {
+    return [...this.ports].filter(([, { type }]) => type === PortType.INPUT).map(([id]) => id);
   }
 
-  @computed private get outputs(): string[] {
+  @computed protected get outputs(): string[] {
     return [...this.ports].filter(([id, { type }]) => type === PortType.OUTPUT).map(([id]) => id);
   }
 
-  constructor(
-    private graph: GraphStore,
-    public type: NodeType = NodeType.DEFAULT,
-  ) {}
+  @computed get center() {
+    return [this.x + this.width / 2, this.y + this.height / 2];
+  }
 
-  get width() {
-    return 100;
+  set center([x, y]: [number, number]) {
+    this.x = x - this.width / 2;
+    this.y = y - this.height / 2;
+  }
+
+  constructor(
+    public type: NodeType = NodeType.DEFAULT,
+  ) {
+    // TODO: remove this
+    this.label = this.id.slice(0, 8);
+  }
+
+  @computed get width() {
+    const maxPortsNumber = Math.max(this.inputs.length, this.outputs.length);
+
+    return Math.max(NODE_MIN_WIDTH, maxPortsNumber * (PORT_WIDTH + PORT_STEP) - PORT_STEP);
   }
 
   get height() {

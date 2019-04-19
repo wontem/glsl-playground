@@ -5,9 +5,13 @@ import { observer } from 'mobx-react';
 import { NodeStore } from '../stores/NodeStore';
 import { Port } from './Port';
 import { PortStore } from '../stores/PortStore';
+import { NodeType, PortType, PORT_HEIGHT, NODE_HEIGHT } from '../constants';
+import { GroupIOStore } from '../stores/GroupIOStore';
+import { IconBaseProps } from 'react-icons';
+import { MdSettingsInputComposite, MdCallReceived, MdCallMade } from 'react-icons/md';
+import { GroupStore } from '../stores/GroupStore';
 
 // import { DragSource } from 'react-dnd';
-
 @observer
 export class Node extends React.Component<{
   node: NodeStore;
@@ -15,9 +19,54 @@ export class Node extends React.Component<{
   onMouseUp: (e: React.MouseEvent, item: any) => void;
   onMouseEnter: (e: React.MouseEvent, item: any) => void;
   onMouseLeave: (e: React.MouseEvent, item: any) => void;
+  onDoubleClick: (e: React.MouseEvent, item: any) => void;
   currentItem: any;
   isSelected?: boolean;
 }, never> {
+  getIconComponent(): React.ComponentType<IconBaseProps> {
+    const { node } = this.props;
+
+    if (node instanceof GroupIOStore) {
+      if (node.type === NodeType.GROUP_INPUTS) {
+        return MdCallReceived;
+      } else if (node.type === NodeType.GROUP_OUTPUTS) {
+        return MdCallMade;
+      }
+    } else if (node instanceof GroupStore) {
+      return MdSettingsInputComposite;
+    }
+
+    return null;
+  }
+
+  renderDecorativeItems(): JSX.Element {
+    const {node} = this.props;
+    const Icon = this.getIconComponent();
+
+    const line = node instanceof GroupIOStore ? (
+      <rect
+        y={node.type === NodeType.GROUP_INPUTS ? -PORT_HEIGHT / 2 : NODE_HEIGHT}
+        width={node.width}
+        height={PORT_HEIGHT / 2}
+        fill={'#2196f3'}
+      />
+    ) : null;
+
+    return (
+      <>
+        {line}
+        {
+          Icon && <Icon
+            size={node.height / 2}
+            x={node.width - node.height / 4}
+            y={node.height / 4}
+            color={'#2196f3'}
+          />
+        }
+      </>
+    );
+  }
+
   render() {
     const { node, currentItem, isSelected } = this.props;
 
@@ -38,6 +87,29 @@ export class Node extends React.Component<{
         />
       );
     });
+
+    if (
+      currentItem instanceof PortStore &&
+      node instanceof GroupIOStore &&
+      !(currentItem.node instanceof GroupIOStore) &&
+      currentItem.node !== node &&
+      (
+        (node.type === NodeType.GROUP_INPUTS && currentItem.type === PortType.INPUT) ||
+        (node.type === NodeType.GROUP_OUTPUTS && currentItem.type === PortType.OUTPUT)
+      )
+    ) {
+      ports.push(
+        <Port
+          key={node.tempPort.id}
+          port={node.tempPort}
+          onMouseDown={this.props.onMouseDown}
+          onMouseUp={this.props.onMouseUp}
+          onMouseEnter={this.props.onMouseEnter}
+          onMouseLeave={this.props.onMouseLeave}
+          forceColor={currentItem.color}
+        />
+      );
+    }
 
     const transformString = `translate(${node.x} ${node.y})`;
 
@@ -61,6 +133,7 @@ export class Node extends React.Component<{
           onMouseUp={(e) => this.props.onMouseUp(e, this.props.node)}
           onMouseEnter={(e) => this.props.onMouseEnter(e, this.props.node)}
           onMouseLeave={(e) => this.props.onMouseLeave(e, this.props.node)}
+          onDoubleClick={(e) => this.props.onDoubleClick(e, this.props.node)}
         />
         <text
           y={node.height / 2}
@@ -75,6 +148,7 @@ export class Node extends React.Component<{
           }}
         >{node.label}</text>
         {ports}
+        {this.renderDecorativeItems()}
       </g>
     );
   }

@@ -4,6 +4,7 @@ export const MIN_SCALE = .5;
 export const MAX_SCALE = 2;
 
 export const NODE_HEIGHT = 30;
+export const NODE_MIN_WIDTH = 100;
 
 export const PORT_WIDTH = 10;
 export const PORT_HEIGHT = 6;
@@ -34,6 +35,7 @@ export enum NodeType {
 // }
 
 export enum PortDataType {
+  ANY = 'any',
   TRIGGER = 'trigger',
   TEXTURE = 'texture',
   BOOL = 'bool',
@@ -47,6 +49,7 @@ export enum PortDataType {
 const step = 360 / 8;
 
 export const PortColors: Record<PortDataType, string> = {
+  [PortDataType.ANY]: 'white',
   [PortDataType.TRIGGER]: `hsl(${step * 0 - 10}, 100%, 60%)`,
   [PortDataType.TEXTURE]: `hsl(${step * 1 - 10}, 100%, 60%)`,
   [PortDataType.BOOL]: `hsl(${step * 2 - 10}, 100%, 60%)`,

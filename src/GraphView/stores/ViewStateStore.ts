@@ -6,9 +6,33 @@ import { MIN_SCALE, MAX_SCALE, ZOOM_FACTOR, PortType, CENTER_PADDING, Tool } fro
 import { fork } from '../helpers/fork';
 import { GraphStore } from './GraphStore';
 import { clamp } from '../helpers/clamp';
+import { TempPortStore } from './TempPortStore';
 
 export class ViewStateStore {
-  constructor(private graph: GraphStore) {}
+  @observable private graphStack: GraphStore[];
+  @computed get graph(): GraphStore {
+    return this.graphStack[this.graphStack.length - 1];
+  }
+
+  @action pushGraph(graph: GraphStore): void {
+    this.resetDragState();
+    this.resetSelectionBox();
+    this.selectedNodes.clear();
+    this.graphStack.push(graph);
+  }
+
+  @action popGraph(): void {
+    if (this.graphStack.length > 1) {
+      this.resetDragState();
+      this.resetSelectionBox();
+      this.selectedNodes.clear();
+      this.graphStack.pop();
+    }
+  }
+
+  constructor(initialGraph: GraphStore) {
+    this.graphStack = [initialGraph];
+  }
 
   @observable tool: Tool = Tool.SELECT;
 
@@ -180,6 +204,7 @@ export class ViewStateStore {
   }
 
   @action onMouseUp(mousePos: [number, number], item?: any): void {
+    // TODO: non-view-state side-effects
     fork(item, {
       // node: (node) => {
       //   if (!this.isDragging && this.selectedNodes.size > 1 && this.selectedNodes.has(node)) {
@@ -190,14 +215,25 @@ export class ViewStateStore {
       port: port => {
         if (
           this.draggingItem instanceof PortStore &&
-          this.draggingItem.type !== port.type &&
-          this.draggingItem.dataType === port.dataType &&
-          !this.draggingItem.isLinked(port)
+          this.draggingItem.type !== port.type
         ) {
-          const from = this.draggingItem.type === PortType.INPUT ? port : this.draggingItem;
-          const to = this.draggingItem.type === PortType.INPUT ? this.draggingItem : port;
-          // TODO: non-view-state side-effect
-          from.link(to);
+          if (port instanceof TempPortStore) {
+            const newPort = new PortStore(port.node, port.type, this.draggingItem.dataType);
+            port.node.addGroupPort(newPort);
+
+            const from = this.draggingItem.type === PortType.INPUT ? newPort : this.draggingItem;
+            const to = this.draggingItem.type === PortType.INPUT ? this.draggingItem : newPort;
+
+            from.link(to);
+          } else if (
+            this.draggingItem.dataType === port.dataType &&
+            !this.draggingItem.isLinked(port)
+          ) {
+            const from = this.draggingItem.type === PortType.INPUT ? port : this.draggingItem;
+            const to = this.draggingItem.type === PortType.INPUT ? this.draggingItem : port;
+
+            from.link(to);
+          }
         }
       },
       default: () => {
@@ -207,10 +243,11 @@ export class ViewStateStore {
       }
     });
 
-    this.isDragging = false;
-    this.isMouseDown = false;
-    this.draggingItem = null;
+    this.resetDragState();
+    this.resetSelectionBox();
+  }
 
+  @action resetSelectionBox() {
     this.selectionFrom = null;
     this.selectionTo = null;
     this.isSelectionActive = false;

@@ -3,18 +3,20 @@ import { observer } from 'mobx-react';
 import { action } from 'mobx';
 import { HotKeys } from './HotKeys';
 
-import { GraphStore } from '../stores/GraphStore';
 import { Node } from './Node';
 import { Link } from './Link';
 import { LinkRaw } from './LinkRaw';
-import { PortType, Tool, PortDataType } from '../constants';
+import { PortType, Tool, PortDataType, NodeType } from '../constants';
 import { ViewStateStore } from '../stores/ViewStateStore';
 import { PortStore } from '../stores/PortStore';
 import { NodeTemplate } from '../types';
 import { PrioritizedArray } from '../helpers/PrioritizedArray';
+import { fork } from '../helpers/fork';
+import { GroupStore } from '../stores/GroupStore';
+import { NodeStore } from '../stores/NodeStore';
+import { templates } from '../templates';
 
 interface Props {
-  graph: GraphStore;
   viewState: ViewStateStore; // TODO: maybe move to Patch as property
 }
 
@@ -30,70 +32,30 @@ export class Patch extends React.Component<Props> {
     return [x, y];
   }
 
-  @action onDoubleClick: React.MouseEventHandler<SVGSVGElement> = (e) => {
-    const [x, y] = this.props.viewState.toCanvasCoordinate(this.mouseCoordinate(e));
+  @action onDoubleClick = (e: React.MouseEvent, item?: any) => {
+    e.stopPropagation();
 
-    const templates: NodeTemplate[] = [
-      {
-        inputs: [
-          PortDataType.TRIGGER,
-          PortDataType.VEC2,
-          PortDataType.VEC2,
-          PortDataType.VEC3,
-          PortDataType.INT,
-          PortDataType.FLOAT,
-          PortDataType.TEXTURE,
-          PortDataType.TEXTURE,
-        ],
-        outputs: [
-          PortDataType.TRIGGER,
-          PortDataType.VEC3,
-          PortDataType.INT,
-          PortDataType.FLOAT,
-          PortDataType.TEXTURE,
-        ],
+    fork(item, {
+      node: (node) => {
+        switch (node.type) {
+          case NodeType.GROUP: {
+            this.props.viewState.pushGraph((node as GroupStore).groupGraph);
+            break;
+          }
+        }
       },
-      {
-        inputs: [
-          PortDataType.TRIGGER,
-          PortDataType.VEC2,
-          PortDataType.BOOL,
-          PortDataType.VEC2,
-          PortDataType.INT,
-          PortDataType.FLOAT,
-          PortDataType.TEXTURE,
-        ],
-        outputs: [
-          PortDataType.TRIGGER,
-          PortDataType.VEC3,
-          PortDataType.INT,
-          PortDataType.FLOAT,
-          PortDataType.BOOL,
-          PortDataType.TEXTURE,
-        ],
-      },
-      {
-        inputs: [
-          PortDataType.TRIGGER,
-          PortDataType.VEC2,
-          PortDataType.VEC2,
-          PortDataType.TEXTURE,
-        ],
-        outputs: [
-          PortDataType.TRIGGER,
-          PortDataType.VEC3,
-          PortDataType.BOOL,
-          PortDataType.TEXTURE,
-        ],
-      },
-    ];
+      default: () => {
+        const node = NodeStore.fromTemplate(templates[Math.floor(Math.random() * templates.length)]);
+        node.center = this.props.viewState.toCanvasCoordinate(this.mouseCoordinate(e));
+        this.props.viewState.graph.bindNode(node);
 
-    this.props.graph.addNodeFromTemplate(x, y, templates[Math.floor(Math.random() * templates.length)]);
-    // this.props.viewState.draggingItem = node;
-    // this.props.viewState.selectedNodes.clear();
-    // this.props.viewState.selectedNodes.add(node);
-    // this.props.viewState.isMouseDown = true;
-    // this.props.viewState.isDragging = true;
+        // this.props.viewState.draggingItem = node;
+        // this.props.viewState.selectedNodes.clear();
+        // this.props.viewState.selectedNodes.add(node);
+        // this.props.viewState.isMouseDown = true;
+        // this.props.viewState.isDragging = true;
+      },
+    });
   }
 
   @action onWheel: React.WheelEventHandler<SVGSVGElement> = (e) => {
@@ -145,7 +107,7 @@ export class Patch extends React.Component<Props> {
     const links: PrioritizedArray<JSX.Element, number> = new PrioritizedArray();
     const shouldDisableLinks = this.props.viewState.isMouseDown && this.props.viewState.draggingItem instanceof PortStore;
 
-    this.props.graph.nodes.forEach((node, id) => {
+    this.props.viewState.graph.nodes.forEach((node, id) => {
       const isSelected = this.props.viewState.selectedNodes.has(node);
       nodes.push(isSelected ? 1 : 0,
         <Node
@@ -155,13 +117,14 @@ export class Patch extends React.Component<Props> {
           onMouseUp={this.onMouseUp}
           onMouseEnter={this.onMouseEnter}
           onMouseLeave={this.onMouseLeave}
+          onDoubleClick={this.onDoubleClick}
           currentItem={this.props.viewState.draggingItem}
           isSelected={isSelected}
         />
       );
     });
 
-    this.props.graph.links.forEach((link, id) => {
+    this.props.viewState.graph.links.forEach((link, id) => {
       const selectedNodes = this.props.viewState.selectedNodes;
       const isHovered = this.props.viewState.hoveredItem === link;
       const isHighlighted = !shouldDisableLinks && (selectedNodes.size === 0 || selectedNodes.has(link.out.node) || selectedNodes.has(link.in.node));
@@ -187,6 +150,7 @@ export class Patch extends React.Component<Props> {
         delete: ['del', 'backspace'],
         changeTool: 't',
         groupNodes: 'cmd+g',
+        popGraph: 'escape',
       }} handlers={{
         center: action(() => this.props.viewState.centerBox(this.svgElement.current.getBBox())),
         delete: action(() => {
@@ -199,8 +163,14 @@ export class Patch extends React.Component<Props> {
         groupNodes: action((e: any) => {
           e.preventDefault();
           if (this.props.viewState.selectedNodes.size > 1) {
-            this.props.graph.groupNodes(this.props.viewState.selectedNodes);
+            this.props.viewState.graph.groupNodes(this.props.viewState.selectedNodes);
+            this.props.viewState.resetDragState();
+            this.props.viewState.resetSelectionBox();
+            this.props.viewState.selectedNodes.clear();
           }
+        }),
+        popGraph: action(() => {
+          this.props.viewState.popGraph();
         }),
       }} style={{
         position: 'absolute',
