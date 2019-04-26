@@ -33,7 +33,8 @@ export class NodeStore {
   }
 
   id: Readonly<string> = uuid();
-  @observable graph: GraphStore = null;
+  @observable graph: GraphStore | undefined;
+  @observable textWidth: number = 0;
   @observable x: number = 0;
   @observable y: number = 0;
   @observable label: string = '';
@@ -67,7 +68,7 @@ export class NodeStore {
   @computed get width() {
     const maxPortsNumber = Math.max(this.inputs.length, this.outputs.length);
 
-    return Math.max(NODE_MIN_WIDTH, maxPortsNumber * (PORT_WIDTH + PORT_STEP) - PORT_STEP);
+    return Math.max(NODE_MIN_WIDTH, maxPortsNumber * (PORT_WIDTH + PORT_STEP) - PORT_STEP, this.textWidth + 2 * PORT_WIDTH);
   }
 
   get height() {
@@ -83,10 +84,14 @@ export class NodeStore {
       return this.outputs;
     }
 
-    return null;
+    throw 'Unknown port type';
   }
 
   @action addPort(port: PortStore): void {
+    if (this.ports.has(port.id)) {
+      throw 'Port with the same ID already exists';
+    }
+
     this.ports.set(port.id, port);
   }
 
@@ -95,13 +100,14 @@ export class NodeStore {
       return -1;
     }
 
-    const port = this.ports.get(id);
+    const port = this.ports.get(id)!;
 
     return this.getPortsOrder(port.type).indexOf(id);
   }
 
   @action delete(): void {
     this.ports.forEach(port => port.delete());
-    this.graph.nodes.delete(this.id);
+    this.graph!.nodes.delete(this.id);
+    this.graph = undefined;
   }
 }

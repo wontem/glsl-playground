@@ -7,6 +7,7 @@ import { fork } from '../helpers/fork';
 import { GraphStore } from './GraphStore';
 import { clamp } from '../helpers/clamp';
 import { TempPortStore } from './TempPortStore';
+import { PortalPortStore } from './PortalPortStore';
 
 export class ViewStateStore {
   @observable private graphStack: GraphStore[];
@@ -37,27 +38,27 @@ export class ViewStateStore {
   @observable tool: Tool = Tool.SELECT;
 
   @observable isSelectionActive: boolean = false;
-  @observable private selectionFrom: [number, number] = null;
-  @observable private selectionTo: [number, number] = null;
+  @observable private selectionFrom: [number, number] | null = null;
+  @observable private selectionTo: [number, number] | null = null;
 
   @observable hoveredItem: any;
 
   @computed get selectionStart(): [number, number] {
     return [
-      Math.min(this.selectionFrom[0], this.selectionTo[0]),
-      Math.min(this.selectionFrom[1], this.selectionTo[1]),
+      Math.min(this.selectionFrom![0], this.selectionTo![0]),
+      Math.min(this.selectionFrom![1], this.selectionTo![1]),
     ];
   }
 
   @computed get selectionSize(): [number, number] {
     return [
-      Math.abs(this.selectionTo[0] - this.selectionFrom[0]),
-      Math.abs(this.selectionTo[1] - this.selectionFrom[1]),
+      Math.abs(this.selectionTo![0] - this.selectionFrom![0]),
+      Math.abs(this.selectionTo![1] - this.selectionFrom![1]),
     ];
   }
 
-  @observable width: number;
-  @observable height: number;
+  @observable width: number = 0;
+  @observable height: number = 0;
   @observable private _scale: number = 1;
 
   @observable selectedNodes: Set<NodeStore> = new Set();
@@ -66,9 +67,9 @@ export class ViewStateStore {
   @observable translateX: number = 0;
   @observable translateY: number = 0;
 
-  @observable isMouseDown: boolean;
-  @observable isDragging: boolean;
-  @observable prevMousePos: [number, number];
+  @observable isMouseDown: boolean = false;
+  @observable isDragging: boolean = false;
+  @observable prevMousePos!: [number, number];
 
   @computed get scale(): number {
     return this._scale;
@@ -218,7 +219,7 @@ export class ViewStateStore {
           this.draggingItem.type !== port.type
         ) {
           if (port instanceof TempPortStore) {
-            const newPort = new PortStore(port.node, port.type, this.draggingItem.dataType);
+            const newPort = new PortalPortStore(port.node, port.type, this.draggingItem.dataType);
             port.node.addGroupPort(newPort);
 
             const from = this.draggingItem.type === PortType.INPUT ? newPort : this.draggingItem;

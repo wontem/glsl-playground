@@ -1,5 +1,5 @@
 import { NodeTemplate } from './types';
-import { PortDataType } from './constants';
+import { PortDataType } from './operator/constants';
 
 export const templates: NodeTemplate[] = [
   {

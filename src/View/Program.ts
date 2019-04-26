@@ -142,7 +142,7 @@ export class Program {
 
   public render(
     [width, height]: Resolution,
-    framebuffer: WebGLFramebuffer = null,
+    framebuffer: WebGLFramebuffer,
   ) {
     const gl = this.gl;
 

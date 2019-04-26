@@ -1,7 +1,5 @@
-import { PortDataType } from './constants';
-
 interface PortTemplate {
-  type: PortDataType;
+  type: string;
   label?: string;
 }
 

@@ -66,14 +66,10 @@ export interface UpdateError {
 
 export class GLSLView extends React.PureComponent<GLSLViewProps> {
   private canvas: React.RefObject<HTMLCanvasElement>;
-  private view: View;
+  private view!: View;
 
   getCanvas() {
     return this.canvas.current;
-  }
-
-  getView() {
-    return this.view;
   }
 
   constructor(props: GLSLViewProps) {
@@ -225,7 +221,7 @@ export class GLSLView extends React.PureComponent<GLSLViewProps> {
   }
 
   componentDidMount() {
-    const canvas = this.canvas.current;
+    const canvas = this.canvas.current!;
     const ctx = canvas.getContext('webgl2', {
       preserveDrawingBuffer: true,
     }) as WebGL2RenderingContext;
@@ -236,7 +232,7 @@ export class GLSLView extends React.PureComponent<GLSLViewProps> {
 
   componentWillUnmount() {
     this.view.destroy();
-    this.view = null;
+    delete this.view;
   }
 
   render() {

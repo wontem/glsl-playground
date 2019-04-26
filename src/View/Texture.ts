@@ -105,19 +105,19 @@ export class Texture implements ReadonlyTexture {
       return;
     }
 
-    const unitsSet: Set<number> = this.texturesCounterMap.get(gl);
+    const unitsSet: Set<number> = this.texturesCounterMap.get(gl)!;
     unitsSet.delete(unit);
   }
 
   public static lockUnit(gl: WebGL2RenderingContext, unit: number): void {
-    const unitsSet: Set<number> = this.texturesCounterMap.has(gl) ? this.texturesCounterMap.get(gl) : new Set();
+    const unitsSet: Set<number> = this.texturesCounterMap.has(gl) ? this.texturesCounterMap.get(gl)! : new Set();
 
     unitsSet.add(unit);
     this.texturesCounterMap.set(gl, unitsSet);
   }
 
   public static getNewUnit(gl: WebGL2RenderingContext): number {
-    const unitsSet: Set<number> = this.texturesCounterMap.has(gl) ? this.texturesCounterMap.get(gl) : new Set();
+    const unitsSet: Set<number> = this.texturesCounterMap.has(gl) ? this.texturesCounterMap.get(gl)! : new Set();
 
     let unit = 0;
 
@@ -142,7 +142,7 @@ export class Texture implements ReadonlyTexture {
     private unit: number = Texture.getNewUnit(gl),
   ) {
     Texture.lockUnit(this.gl, this.unit);
-    this.texture = gl.createTexture();
+    this.texture = gl.createTexture()!;
 
     this.activate();
     this.setData(new Uint8Array(resolution[0] * resolution[1] * 4), resolution);
@@ -242,7 +242,7 @@ export class Texture implements ReadonlyTexture {
 
   public destroy() {
     this.gl.deleteTexture(this.texture);
-    this.texture = null;
+    delete this.texture;
 
     Texture.unlockUnit(this.gl, this.unit);
 

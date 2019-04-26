@@ -5,10 +5,23 @@ import { PortStore } from './PortStore';
 import { LinkStore } from './LinkStore';
 import { PortType, NODE_HEIGHT } from '../constants';
 import { GroupStore } from './GroupStore';
+import { PortalPortStore } from './PortalPortStore';
+
+export interface GraphStoreConfig {
+  colors: Record<string, string>;
+}
 
 export class GraphStore {
+  readonly config: Readonly<GraphStoreConfig>;
   @observable nodes: Map<string, NodeStore> = new Map();
   @observable links: Map<string, LinkStore> = new Map();
+
+  constructor(config?: Partial<GraphStoreConfig>) {
+    this.config = {
+      colors: {},
+      ...config,
+    };
+  }
 
   // TODO: refactor all this shit related to links
   @computed get portToLinks(): Map<PortStore, Set<LinkStore>> {
@@ -45,7 +58,7 @@ export class GraphStore {
   }
 
   checkPortsLink(portA: PortStore, portB: PortStore): boolean {
-    return this.portToPorts.has(portA) && this.portToPorts.get(portA).has(portB);
+    return this.portToPorts.has(portA) && this.portToPorts.get(portA)!.has(portB);
   }
 
   @action bindNode(node: NodeStore): void {
@@ -62,8 +75,8 @@ export class GraphStore {
       port.unlinkAll();
     });
 
-    node.graph.nodes.delete(node.id);
-    node.graph = null;
+    node.graph!.nodes.delete(node.id);
+    node.graph = undefined;
   }
 
   @action addLink(fromPort: PortStore<PortType.OUTPUT>, toPort: PortStore<PortType.INPUT>): void {
@@ -105,7 +118,7 @@ export class GraphStore {
       box.yb = Math.max(node.y + node.height, box.yb);
     });
 
-    const groupNode = new GroupStore();
+    const groupNode = new GroupStore(this.config);
     this.bindNode(groupNode);
 
     groupNode.inputsNode.center = [(box.xl + box.xr) / 2, box.yt - NODE_HEIGHT * 2];
@@ -124,11 +137,11 @@ export class GraphStore {
     externalInputLinks.forEach(link => {
       const dataType = link.out.dataType;
 
-      const externalPort = new PortStore(groupNode, PortType.INPUT, dataType);
+      const externalPort = new PortalPortStore(groupNode, PortType.INPUT, dataType);
       groupNode.addPort(externalPort);
       link.in.link(externalPort);
 
-      const internalPort = new PortStore(groupNode.inputsNode, PortType.OUTPUT, dataType);
+      const internalPort = new PortalPortStore(groupNode.inputsNode, PortType.OUTPUT, dataType);
       groupNode.inputsNode.addPort(internalPort);
       internalPort.link(link.out);
 
@@ -139,18 +152,27 @@ export class GraphStore {
     externalOutputLinks.forEach(link => {
       const dataType = link.in.dataType;
 
-      const externalPort = new PortStore(groupNode, PortType.OUTPUT, dataType);
+      const externalPort = new PortalPortStore(groupNode, PortType.OUTPUT, dataType);
       groupNode.addPort(externalPort);
       externalPort.link(link.out);
 
-      const internalPort = new PortStore(groupNode.outputsNode, PortType.INPUT, dataType);
+      const internalPort = new PortalPortStore(groupNode.outputsNode, PortType.INPUT, dataType);
       groupNode.outputsNode.addPort(internalPort);
       link.in.link(internalPort);
 
+      // TODO: encapsulate portPortals
       groupNode.portPortals.set(internalPort, externalPort);
       groupNode.portPortals.set(externalPort, internalPort);
     });
 
     groupNode.center = [(box.xl + box.xr) / 2, (box.yb + box.yt) / 2];
+  }
+
+  @action unGroupNode(groupNode: GroupStore): void {
+
+  }
+
+  @action unGroupNodes(nodes: Set<NodeStore>): void {
+    [...nodes].filter(node => node instanceof GroupStore).forEach(node => this.unGroupNode(node as GroupStore));
   }
 }

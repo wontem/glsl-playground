@@ -6,15 +6,13 @@ import { HotKeys } from './HotKeys';
 import { Node } from './Node';
 import { Link } from './Link';
 import { LinkRaw } from './LinkRaw';
-import { PortType, Tool, PortDataType, NodeType } from '../constants';
+import { PortType, Tool, NodeType } from '../constants';
 import { ViewStateStore } from '../stores/ViewStateStore';
 import { PortStore } from '../stores/PortStore';
-import { NodeTemplate } from '../types';
 import { PrioritizedArray } from '../helpers/PrioritizedArray';
 import { fork } from '../helpers/fork';
 import { GroupStore } from '../stores/GroupStore';
-import { NodeStore } from '../stores/NodeStore';
-import { templates } from '../templates';
+import { OpAnimationLoop, OpLogger, OpCounter, OpLifeCycle } from '../operator/OpLifeCycle';
 
 interface Props {
   viewState: ViewStateStore; // TODO: maybe move to Patch as property
@@ -25,7 +23,7 @@ export class Patch extends React.Component<Props> {
   private svgElement: React.RefObject<SVGSVGElement> = React.createRef();
 
   mouseCoordinate(e: React.MouseEvent): [number, number] {
-    const rect = this.svgElement.current.getBoundingClientRect();
+    const rect = this.svgElement.current!.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
@@ -45,9 +43,11 @@ export class Patch extends React.Component<Props> {
         }
       },
       default: () => {
-        const node = NodeStore.fromTemplate(templates[Math.floor(Math.random() * templates.length)]);
-        node.center = this.props.viewState.toCanvasCoordinate(this.mouseCoordinate(e));
-        this.props.viewState.graph.bindNode(node);
+        const OpConstructor = [OpAnimationLoop, OpLogger, OpCounter][Math.floor(Math.random() * 3)];
+        const op = new OpConstructor();
+        // const node = NodeStore.fromTemplate(templates[Math.floor(Math.random() * templates.length)]);
+        op.node.center = this.props.viewState.toCanvasCoordinate(this.mouseCoordinate(e));
+        this.props.viewState.graph.bindNode(op.node);
 
         // this.props.viewState.draggingItem = node;
         // this.props.viewState.selectedNodes.clear();
@@ -86,7 +86,7 @@ export class Patch extends React.Component<Props> {
     this.props.viewState.onMouseUp(this.mouseCoordinate(e), item);
   }
 
-  renderTempLink(): JSX.Element {
+  renderTempLink(): JSX.Element | undefined {
     if (this.props.viewState.isDragging && this.props.viewState.draggingItem instanceof PortStore) {
       const port = this.props.viewState.draggingItem;
       const from: [number, number] = [port.x, port.y];
@@ -98,8 +98,6 @@ export class Patch extends React.Component<Props> {
           <LinkRaw fromPoint={to} toPoint={from} color={port.color} ignorePointerEvents />
       );
     }
-
-    return null;
   }
 
   render() {
@@ -152,9 +150,11 @@ export class Patch extends React.Component<Props> {
         groupNodes: 'cmd+g',
         popGraph: 'escape',
       }} handlers={{
-        center: action(() => this.props.viewState.centerBox(this.svgElement.current.getBBox())),
+        center: action(() => this.props.viewState.centerBox(this.svgElement.current!.getBBox())),
         delete: action(() => {
-          this.props.viewState.selectedNodes.forEach(node => node.delete());
+          this.props.viewState.selectedNodes.forEach(node => {
+            OpLifeCycle.opLifeCycles.get(node)!.destroy(); // FIXME: deleting of groups leads to critical
+          });
           this.props.viewState.selectedNodes.clear();
         }),
         changeTool: action(() => {
@@ -180,7 +180,7 @@ export class Patch extends React.Component<Props> {
         <svg
           style={{
             position: 'relative',
-            border: '2px solid',
+            // border: '2px solid',
             boxSizing: 'border-box',
             userSelect: 'none',
             background: '#111',

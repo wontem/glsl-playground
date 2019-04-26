@@ -1,7 +1,7 @@
 import { Uniform } from './models';
 
 export class UniformState {
-  private uniforms: Uniform[];
+  private uniforms!: Uniform[];
   private locationsMap: Map<string, WebGLUniformLocation>;
   private shouldRecalculateLocations: boolean;
 
@@ -30,7 +30,7 @@ export class UniformState {
       if (this.locationsMap.has(name)) {
         const location = this.locationsMap.get(name);
 
-        // TODO: fix typings
+        // TODO: fix types
         (this.gl as any)[`uniform${method}`](location, ...value);
       }
     });

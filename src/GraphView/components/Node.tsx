@@ -5,15 +5,15 @@ import { observer } from 'mobx-react';
 import { NodeStore } from '../stores/NodeStore';
 import { Port } from './Port';
 import { PortStore } from '../stores/PortStore';
-import { NodeType, PortType, PORT_HEIGHT, NODE_HEIGHT } from '../constants';
+import { NodeType, PortType, PORT_HEIGHT, NODE_HEIGHT, PORT_WIDTH } from '../constants';
 import { GroupIOStore } from '../stores/GroupIOStore';
 import { IconBaseProps } from 'react-icons';
 import { MdSettingsInputComposite, MdCallReceived, MdCallMade } from 'react-icons/md';
 import { GroupStore } from '../stores/GroupStore';
 
 // import { DragSource } from 'react-dnd';
-@observer
-export class Node extends React.Component<{
+
+interface Props {
   node: NodeStore;
   onMouseDown: (e: React.MouseEvent, item: any) => void;
   onMouseUp: (e: React.MouseEvent, item: any) => void;
@@ -22,8 +22,23 @@ export class Node extends React.Component<{
   onDoubleClick: (e: React.MouseEvent, item: any) => void;
   currentItem: any;
   isSelected?: boolean;
-}, never> {
-  getIconComponent(): React.ComponentType<IconBaseProps> {
+}
+
+@observer
+export class Node extends React.Component<Props, never> {
+  textRef: React.RefObject<SVGTextElement> = React.createRef();
+
+  // TODO: optimize it
+  componentDidMount() {
+    this.props.node.textWidth = this.textRef.current!.getBBox().width;
+  }
+
+  // TODO: optimize it
+  componentDidUpdate() {
+    this.props.node.textWidth = this.textRef.current!.getBBox().width;
+  }
+
+  getIconComponent(): React.ComponentType<IconBaseProps> | undefined {
     const { node } = this.props;
 
     if (node instanceof GroupIOStore) {
@@ -35,8 +50,6 @@ export class Node extends React.Component<{
     } else if (node instanceof GroupStore) {
       return MdSettingsInputComposite;
     }
-
-    return null;
   }
 
   renderDecorativeItems(): JSX.Element {
@@ -137,7 +150,7 @@ export class Node extends React.Component<{
         />
         <text
           y={node.height / 2}
-          x={node.height / 4}
+          x={PORT_WIDTH}
           alignmentBaseline="middle"
           fill={isSelected ? '#444' : 'white'}
           style={{
@@ -146,6 +159,7 @@ export class Node extends React.Component<{
             fontSize: `${node.height / 2}px`,
             fontWeight: 300,
           }}
+          ref={this.textRef}
         >{node.label}</text>
         {ports}
         {this.renderDecorativeItems()}
