@@ -1,10 +1,15 @@
-import { NodeType, PortType, PORT_WIDTH, PORT_STEP, NODE_MIN_WIDTH } from '../constants';
-import { NodeStore } from './NodeStore';
-import { TempPortStore } from './TempPortStore';
-import { GroupStore } from './GroupStore';
 import { action, computed } from 'mobx';
-import { PortStore } from './PortStore';
+import {
+  NODE_MIN_WIDTH,
+  NodeType,
+  PORT_STEP,
+  PORT_WIDTH,
+  PortType,
+} from '../constants';
+import { GroupStore } from './GroupStore';
+import { NodeStore } from './NodeStore';
 import { PortalPortStore } from './PortalPortStore';
+import { TempPortStore } from './TempPortStore';
 
 export interface GroupIOStore {
   ports: Map<string, PortalPortStore>;
@@ -14,32 +19,24 @@ export interface GroupIOStore {
 export class GroupIOStore extends NodeStore {
   tempPort: TempPortStore;
 
-  constructor(public group: GroupStore, type: NodeType.GROUP_INPUTS | NodeType.GROUP_OUTPUTS) {
+  constructor(
+    public group: GroupStore,
+    type: NodeType.GROUP_INPUTS | NodeType.GROUP_OUTPUTS,
+  ) {
     super(type);
 
-    const tempPortType = this.type === NodeType.GROUP_INPUTS ? PortType.OUTPUT : PortType.INPUT;
+    const tempPortType =
+      this.type === NodeType.GROUP_INPUTS ? PortType.OUTPUT : PortType.INPUT;
     this.tempPort = new TempPortStore(this, tempPortType);
 
     this.label = this.type === NodeType.GROUP_INPUTS ? 'inputs' : 'outputs';
   }
 
-  // TODO: maybe connect portals inside of PortalPortStore
-  get portPortals(): Map<PortalPortStore, PortStore> | Map<PortStore, PortalPortStore> {
-    return this.group.portPortals;
-  }
-
   @computed get width() {
-    return Math.max(NODE_MIN_WIDTH, (this.ports.size + 1) * (PORT_WIDTH + PORT_STEP) - PORT_STEP);
-  }
-
-  @action addGroupPort(port: PortalPortStore): void {
-    this.addPort(port);
-
-    const newGroupPort = new PortalPortStore(this.group, port.type === PortType.INPUT ? PortType.OUTPUT : PortType.INPUT, port.dataType);
-    this.group.addPort(newGroupPort);
-
-    this.portPortals.set(port, newGroupPort);
-    this.portPortals.set(newGroupPort, port);
+    return Math.max(
+      NODE_MIN_WIDTH,
+      (this.ports.size + 1) * (PORT_WIDTH + PORT_STEP) - PORT_STEP,
+    );
   }
 
   @action delete(): void {}

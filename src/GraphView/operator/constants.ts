@@ -13,19 +13,17 @@ export enum PortDataType {
   STRING = 'string',
 };
 
-const step = 360 / 9;
-
 export const PortColors: Record<PortDataType, string> = {
   [PortDataType.ANY]: 'white',
-  [PortDataType.TRIGGER]: `hsl(${step * 0 - 10}, 100%, 60%)`,
-  [PortDataType.TEXTURE]: `hsl(${step * 1 - 10}, 100%, 60%)`,
-  [PortDataType.BOOL]: `hsl(${step * 2 - 10}, 100%, 60%)`,
-  [PortDataType.FLOAT]: `hsl(${step * 3 - 10}, 100%, 60%)`,
-  [PortDataType.INT]: `hsl(${step * 4 - 10}, 100%, 60%)`,
-  [PortDataType.VEC2]: `hsl(${step * 5 - 10}, 100%, 60%)`,
-  [PortDataType.VEC3]: `hsl(${step * 6 - 10}, 100%, 60%)`,
-  [PortDataType.VEC4]: `hsl(${step * 7 - 10}, 100%, 60%)`,
-  [PortDataType.STRING]: `hsl(${step * 8 - 10}, 100%, 60%)`,
+  [PortDataType.TRIGGER]: '#ef5350',
+  [PortDataType.TEXTURE]: '#4CAF50',
+  [PortDataType.BOOL]: '#4DB6AC',
+  [PortDataType.FLOAT]: '#4DB6AC',
+  [PortDataType.INT]: '#4DB6AC',
+  [PortDataType.VEC2]: '#4DB6AC',
+  [PortDataType.VEC3]: '#4DB6AC',
+  [PortDataType.VEC4]: '#4DB6AC',
+  [PortDataType.STRING]: '#FFC107',
 };
 
 export interface IDataTypes {

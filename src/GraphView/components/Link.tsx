@@ -31,7 +31,7 @@ export class Link extends React.Component<{
         <LinkRaw
           fromPoint={[link.in.x, link.in.y]}
           toPoint={[link.out.x, link.out.y]}
-          color={isHighlighted ? link.in.color : '#333'}
+          color={isHighlighted ? link.in.color : '#263238'}
           width={isHovered ? WIRE_WIDTH * 2 : WIRE_WIDTH}
           ignorePointerEvents
         />

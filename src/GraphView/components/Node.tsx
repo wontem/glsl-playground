@@ -61,7 +61,7 @@ export class Node extends React.Component<Props, never> {
         y={node.type === NodeType.GROUP_INPUTS ? -PORT_HEIGHT / 2 : NODE_HEIGHT}
         width={node.width}
         height={PORT_HEIGHT / 2}
-        fill={'#2196f3'}
+        fill={'#29B6F6'}
       />
     ) : null;
 
@@ -73,7 +73,7 @@ export class Node extends React.Component<Props, never> {
             size={node.height / 2}
             x={node.width - node.height / 4}
             y={node.height / 4}
-            color={'#2196f3'}
+            color={'#29B6F6'}
           />
         }
       </>
@@ -141,7 +141,7 @@ export class Node extends React.Component<Props, never> {
         <rect
           width={node.width}
           height={node.height}
-          fill={!isSelected ? '#444' : 'white'}
+          fill={!isSelected ? '#37474F' : '#CFD8DC'}
           onMouseDown={(e) => this.props.onMouseDown(e, this.props.node)}
           onMouseUp={(e) => this.props.onMouseUp(e, this.props.node)}
           onMouseEnter={(e) => this.props.onMouseEnter(e, this.props.node)}
@@ -152,7 +152,7 @@ export class Node extends React.Component<Props, never> {
           y={node.height / 2}
           x={PORT_WIDTH}
           alignmentBaseline="middle"
-          fill={isSelected ? '#444' : 'white'}
+          fill={isSelected ? '#37474F' : 'white'}
           style={{
             fontFamily: 'Helvetica, sans-serif',
             pointerEvents: 'none',

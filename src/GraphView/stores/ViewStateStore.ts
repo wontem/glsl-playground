@@ -1,13 +1,20 @@
-import { observable, computed, action } from 'mobx';
+import { action, computed, observable } from 'mobx';
 
-import { NodeStore } from './NodeStore';
-import { PortStore } from './PortStore';
-import { MIN_SCALE, MAX_SCALE, ZOOM_FACTOR, PortType, CENTER_PADDING, Tool } from '../constants';
+import {
+  CENTER_PADDING,
+  MAX_SCALE,
+  MIN_SCALE,
+  PortType,
+  Tool,
+  ZOOM_FACTOR,
+} from '../constants';
+import { clamp } from '../helpers/clamp';
 import { fork } from '../helpers/fork';
 import { GraphStore } from './GraphStore';
-import { clamp } from '../helpers/clamp';
-import { TempPortStore } from './TempPortStore';
+import { NodeStore } from './NodeStore';
 import { PortalPortStore } from './PortalPortStore';
+import { PortStore } from './PortStore';
+import { TempPortStore } from './TempPortStore';
 
 export class ViewStateStore {
   @observable private graphStack: GraphStore[];
@@ -76,14 +83,12 @@ export class ViewStateStore {
   }
 
   @computed get viewBox(): string {
-    return `${this.translateX} ${this.translateY} ${this.width / this.scale} ${this.height / this.scale}`;
+    return `${this.translateX} ${this.translateY} ${this.width /
+      this.scale} ${this.height / this.scale}`;
   }
 
   toCanvasCoordinate([x, y]: [number, number]): [number, number] {
-    return [
-      x / this.scale + this.translateX,
-      y / this.scale + this.translateY,
-    ];
+    return [x / this.scale + this.translateX, y / this.scale + this.translateY];
   }
 
   set scale(scale: number) {
@@ -96,9 +101,9 @@ export class ViewStateStore {
     }
 
     fork(item, {
-      port: port => this.hoveredItem = port,
-      link: link => this.hoveredItem = link,
-      node: node => this.hoveredItem = node,
+      port: (port) => (this.hoveredItem = port),
+      link: (link) => (this.hoveredItem = link),
+      node: (node) => (this.hoveredItem = node),
     });
   }
 
@@ -130,7 +135,7 @@ export class ViewStateStore {
 
     fork(this.draggingItem, {
       node: () => {
-        this.selectedNodes.forEach(node => {
+        this.selectedNodes.forEach((node) => {
           node.x += translateX;
           node.y += translateY;
         });
@@ -144,18 +149,18 @@ export class ViewStateStore {
 
           this.selectedNodes.clear();
 
-          this.graph.nodes.forEach(node => {
+          this.graph.nodes.forEach((node) => {
             if (
-              (this.selectionStart[0] < node.x + node.width) &&
-              (this.selectionStart[1] < node.y + node.height) &&
-              (this.selectionStart[0] + this.selectionSize[0] > node.x) &&
-              (this.selectionStart[1] + this.selectionSize[1] > node.y)
+              this.selectionStart[0] < node.x + node.width &&
+              this.selectionStart[1] < node.y + node.height &&
+              this.selectionStart[0] + this.selectionSize[0] > node.x &&
+              this.selectionStart[1] + this.selectionSize[1] > node.y
             ) {
               this.selectedNodes.add(node);
             }
           });
         }
-      }
+      },
     });
 
     this.prevMousePos = currentMousePos;
@@ -165,31 +170,38 @@ export class ViewStateStore {
     const [cX, cY] = this.toCanvasCoordinate(mousePosition);
     const oldScale = this.scale;
 
-    this.scale = delta < 0 ? this.scale * ZOOM_FACTOR : this.scale / ZOOM_FACTOR;
+    this.scale =
+      delta < 0 ? this.scale * ZOOM_FACTOR : this.scale / ZOOM_FACTOR;
 
-    this.translateX = (this.translateX - cX) * oldScale / this.scale + cX;
-    this.translateY = (this.translateY - cY) * oldScale / this.scale + cY;
+    this.translateX = ((this.translateX - cX) * oldScale) / this.scale + cX;
+    this.translateY = ((this.translateY - cY) * oldScale) / this.scale + cY;
   }
 
-  @action onMouseDown(mousePos: [number, number], item?: any, shouldAdd?: boolean): void {
+  @action onMouseDown(
+    mousePos: [number, number],
+    item?: any,
+    shouldAdd?: boolean,
+  ): void {
     this.isMouseDown = true;
     this.prevMousePos = mousePos;
 
     fork(item, {
-      link: link => {
+      link: (link) => {
         link.delete();
       },
-      node: node => {
+      node: (node) => {
         this.draggingItem = node;
 
         if (shouldAdd) {
-          this.selectedNodes.has(node) ? this.selectedNodes.delete(node) : this.selectedNodes.add(node);
+          this.selectedNodes.has(node)
+            ? this.selectedNodes.delete(node)
+            : this.selectedNodes.add(node);
         } else if (!this.selectedNodes.has(node)) {
           this.selectedNodes.clear();
           this.selectedNodes.add(node);
         }
       },
-      port: port => {
+      port: (port) => {
         this.draggingItem = port;
       },
       default: () => {
@@ -200,7 +212,7 @@ export class ViewStateStore {
         }
 
         this.selectedNodes.clear();
-      }
+      },
     });
   }
 
@@ -213,25 +225,40 @@ export class ViewStateStore {
       //     this.selectedNodes.add(node);
       //   }
       // },
-      port: port => {
+      port: (port) => {
         if (
           this.draggingItem instanceof PortStore &&
           this.draggingItem.type !== port.type
         ) {
           if (port instanceof TempPortStore) {
-            const newPort = new PortalPortStore(port.node, port.type, this.draggingItem.dataType);
-            port.node.addGroupPort(newPort);
+            const portalsPair = PortalPortStore.createPortalsPair(
+              port.type === PortType.INPUT ? port.node : port.node.group,
+              port.type === PortType.INPUT ? port.node.group : port.node,
+              this.draggingItem.dataType,
+            );
 
-            const from = this.draggingItem.type === PortType.INPUT ? newPort : this.draggingItem;
-            const to = this.draggingItem.type === PortType.INPUT ? this.draggingItem : newPort;
+            const from =
+              this.draggingItem.type === PortType.OUTPUT
+                ? this.draggingItem
+                : portalsPair.output;
+            const to =
+              this.draggingItem.type === PortType.INPUT
+                ? this.draggingItem
+                : portalsPair.input;
 
             from.link(to);
           } else if (
             this.draggingItem.dataType === port.dataType &&
             !this.draggingItem.isLinked(port)
           ) {
-            const from = this.draggingItem.type === PortType.INPUT ? port : this.draggingItem;
-            const to = this.draggingItem.type === PortType.INPUT ? this.draggingItem : port;
+            const from =
+              this.draggingItem.type === PortType.OUTPUT
+                ? this.draggingItem
+                : port;
+            const to =
+              this.draggingItem.type === PortType.INPUT
+                ? this.draggingItem
+                : port;
 
             from.link(to);
           }
@@ -241,7 +268,7 @@ export class ViewStateStore {
         // if (!this.isDragging) {
         //   this.selectedNode = null;
         // }
-      }
+      },
     });
 
     this.resetDragState();
@@ -254,13 +281,17 @@ export class ViewStateStore {
     this.isSelectionActive = false;
   }
 
-  @action centerBox = (box: Record<'width' | 'height' | 'x' | 'y', number>): void => {
+  @action centerBox = (
+    box: Record<'width' | 'height' | 'x' | 'y', number>,
+  ): void => {
     const width = box.width + CENTER_PADDING * 2;
     const height = box.height + CENTER_PADDING * 2;
 
     this.scale = Math.min(this.width / width, this.height / height);
 
-    this.translateX = box.x - CENTER_PADDING - (this.width / this.scale - width) / 2;
-    this.translateY = box.y - CENTER_PADDING - (this.height / this.scale - height) / 2;
+    this.translateX =
+      box.x - CENTER_PADDING - (this.width / this.scale - width) / 2;
+    this.translateY =
+      box.y - CENTER_PADDING - (this.height / this.scale - height) / 2;
   }
 }

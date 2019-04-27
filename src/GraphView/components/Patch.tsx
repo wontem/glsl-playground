@@ -1,18 +1,27 @@
-import * as React from 'react';
-import { observer } from 'mobx-react';
 import { action } from 'mobx';
+import { observer } from 'mobx-react';
+import * as React from 'react';
+import { NodeType, PortType, Tool } from '../constants';
+import { fork } from '../helpers/fork';
+import { PrioritizedArray } from '../helpers/PrioritizedArray';
+import {
+  OpAnimationLoop,
+  OpBuffer,
+  OpCounter,
+  OpLifeCycle,
+  OpLogger,
+} from '../operator/OpLifeCycle';
+import { GroupStore } from '../stores/GroupStore';
+import { OpNodeStore } from '../stores/OPNodeStore';
+import { PortStore } from '../stores/PortStore';
+import { ViewStateStore } from '../stores/ViewStateStore';
 import { HotKeys } from './HotKeys';
-
-import { Node } from './Node';
 import { Link } from './Link';
 import { LinkRaw } from './LinkRaw';
-import { PortType, Tool, NodeType } from '../constants';
-import { ViewStateStore } from '../stores/ViewStateStore';
-import { PortStore } from '../stores/PortStore';
-import { PrioritizedArray } from '../helpers/PrioritizedArray';
-import { fork } from '../helpers/fork';
-import { GroupStore } from '../stores/GroupStore';
-import { OpAnimationLoop, OpLogger, OpCounter, OpLifeCycle } from '../operator/OpLifeCycle';
+import { Node } from './Node';
+
+let kek = 0; // FIXME: remove
+const OP_CONSTRUCTORS = [OpAnimationLoop, OpLogger, OpCounter, OpBuffer];
 
 interface Props {
   viewState: ViewStateStore; // TODO: maybe move to Patch as property
@@ -43,11 +52,14 @@ export class Patch extends React.Component<Props> {
         }
       },
       default: () => {
-        const OpConstructor = [OpAnimationLoop, OpLogger, OpCounter][Math.floor(Math.random() * 3)];
-        const op = new OpConstructor();
-        // const node = NodeStore.fromTemplate(templates[Math.floor(Math.random() * templates.length)]);
-        op.node.center = this.props.viewState.toCanvasCoordinate(this.mouseCoordinate(e));
-        this.props.viewState.graph.bindNode(op.node);
+        const OpConstructor = OP_CONSTRUCTORS[kek++ % OP_CONSTRUCTORS.length];
+        const node = new OpNodeStore();
+        const op = new OpConstructor(node);
+
+        node.center = this.props.viewState.toCanvasCoordinate(
+          this.mouseCoordinate(e),
+        );
+        this.props.viewState.graph.bindNode(node);
 
         // this.props.viewState.draggingItem = node;
         // this.props.viewState.selectedNodes.clear();
@@ -87,15 +99,30 @@ export class Patch extends React.Component<Props> {
   }
 
   renderTempLink(): JSX.Element | undefined {
-    if (this.props.viewState.isDragging && this.props.viewState.draggingItem instanceof PortStore) {
+    if (
+      this.props.viewState.isDragging &&
+      this.props.viewState.draggingItem instanceof PortStore
+    ) {
       const port = this.props.viewState.draggingItem;
       const from: [number, number] = [port.x, port.y];
-      const to: [number, number] = this.props.viewState.toCanvasCoordinate(this.props.viewState.prevMousePos);
+      const to: [number, number] = this.props.viewState.toCanvasCoordinate(
+        this.props.viewState.prevMousePos,
+      );
 
       return port.type === PortType.OUTPUT ? (
-        <LinkRaw fromPoint={from} toPoint={to} color={port.color} ignorePointerEvents />
+        <LinkRaw
+          fromPoint={from}
+          toPoint={to}
+          color={port.color}
+          ignorePointerEvents
+        />
       ) : (
-          <LinkRaw fromPoint={to} toPoint={from} color={port.color} ignorePointerEvents />
+        <LinkRaw
+          fromPoint={to}
+          toPoint={from}
+          color={port.color}
+          ignorePointerEvents
+        />
       );
     }
   }
@@ -103,11 +130,14 @@ export class Patch extends React.Component<Props> {
   render() {
     const nodes: PrioritizedArray<JSX.Element, number> = new PrioritizedArray();
     const links: PrioritizedArray<JSX.Element, number> = new PrioritizedArray();
-    const shouldDisableLinks = this.props.viewState.isMouseDown && this.props.viewState.draggingItem instanceof PortStore;
+    const shouldDisableLinks =
+      this.props.viewState.isMouseDown &&
+      this.props.viewState.draggingItem instanceof PortStore;
 
     this.props.viewState.graph.nodes.forEach((node, id) => {
       const isSelected = this.props.viewState.selectedNodes.has(node);
-      nodes.push(isSelected ? 1 : 0,
+      nodes.push(
+        isSelected ? 1 : 0,
         <Node
           key={id}
           node={node}
@@ -118,16 +148,21 @@ export class Patch extends React.Component<Props> {
           onDoubleClick={this.onDoubleClick}
           currentItem={this.props.viewState.draggingItem}
           isSelected={isSelected}
-        />
+        />,
       );
     });
 
     this.props.viewState.graph.links.forEach((link, id) => {
       const selectedNodes = this.props.viewState.selectedNodes;
       const isHovered = this.props.viewState.hoveredItem === link;
-      const isHighlighted = !shouldDisableLinks && (selectedNodes.size === 0 || selectedNodes.has(link.out.node) || selectedNodes.has(link.in.node));
+      const isHighlighted =
+        !shouldDisableLinks &&
+        (selectedNodes.size === 0 ||
+          selectedNodes.has(link.out.node) ||
+          selectedNodes.has(link.in.node));
 
-      links.push(isHovered ? 2 : isHighlighted ? 1 : 0,
+      links.push(
+        isHovered ? 2 : isHighlighted ? 1 : 0,
         <Link
           key={id}
           link={link}
@@ -136,46 +171,52 @@ export class Patch extends React.Component<Props> {
           onMouseEnter={this.onMouseEnter}
           onMouseLeave={this.onMouseLeave}
           onMouseDown={this.onMouseDown}
-        />
+        />,
       );
     });
 
     const tempLink = this.renderTempLink();
 
     return (
-      <HotKeys keyMap={{
-        center: 'c',
-        delete: ['del', 'backspace'],
-        changeTool: 't',
-        groupNodes: 'cmd+g',
-        popGraph: 'escape',
-      }} handlers={{
-        center: action(() => this.props.viewState.centerBox(this.svgElement.current!.getBBox())),
-        delete: action(() => {
-          this.props.viewState.selectedNodes.forEach(node => {
-            OpLifeCycle.opLifeCycles.get(node)!.destroy(); // FIXME: deleting of groups leads to critical
-          });
-          this.props.viewState.selectedNodes.clear();
-        }),
-        changeTool: action(() => {
-          this.props.viewState.tool = this.props.viewState.tool === Tool.PAN ? Tool.SELECT : Tool.PAN;
-        }),
-        groupNodes: action((e: any) => {
-          e.preventDefault();
-          if (this.props.viewState.selectedNodes.size > 1) {
-            this.props.viewState.graph.groupNodes(this.props.viewState.selectedNodes);
-            this.props.viewState.resetDragState();
-            this.props.viewState.resetSelectionBox();
+      <HotKeys
+        keyMap={{
+          center: 'c',
+          delete: ['del', 'backspace'],
+          changeTool: 't',
+          groupNodes: 'cmd+g',
+          popGraph: 'escape',
+        }}
+        handlers={{
+          center: action(() =>
+            this.props.viewState.centerBox(this.svgElement.current!.getBBox()),
+          ),
+          delete: action(() => {
+            this.props.viewState.selectedNodes.forEach((node) => node.delete());
             this.props.viewState.selectedNodes.clear();
-          }
-        }),
-        popGraph: action(() => {
-          this.props.viewState.popGraph();
-        }),
-      }} style={{
-        position: 'absolute',
-        outline: 'none',
-      }}
+          }),
+          changeTool: action(() => {
+            this.props.viewState.tool =
+              this.props.viewState.tool === Tool.PAN ? Tool.SELECT : Tool.PAN;
+          }),
+          groupNodes: action((e: any) => {
+            e.preventDefault();
+            if (this.props.viewState.selectedNodes.size > 1) {
+              this.props.viewState.graph.groupNodes(
+                this.props.viewState.selectedNodes,
+              );
+              this.props.viewState.resetDragState();
+              this.props.viewState.resetSelectionBox();
+              this.props.viewState.selectedNodes.clear();
+            }
+          }),
+          popGraph: action(() => {
+            this.props.viewState.popGraph();
+          }),
+        }}
+        style={{
+          position: 'absolute',
+          outline: 'none',
+        }}
       >
         <svg
           style={{
@@ -187,10 +228,9 @@ export class Patch extends React.Component<Props> {
           }}
           ref={this.svgElement}
           viewBox={this.props.viewState.viewBox}
-          preserveAspectRatio='none'
+          preserveAspectRatio="none"
           width={this.props.viewState.width}
           height={this.props.viewState.height}
-
           onDoubleClick={this.onDoubleClick}
           onWheel={this.onWheel}
           onMouseDown={this.onMouseDown}
@@ -206,14 +246,14 @@ export class Patch extends React.Component<Props> {
               y={this.props.viewState.selectionStart[1]}
               width={this.props.viewState.selectionSize[0]}
               height={this.props.viewState.selectionSize[1]}
-              fill='hsla(0, 0%, 100%, .3)'
-              stroke='hsla(0, 0%, 100%, 1)'
+              fill="hsla(0, 0%, 100%, .3)"
+              stroke="hsla(0, 0%, 100%, 1)"
               strokeWidth={1}
-              pointerEvents='none'
+              pointerEvents="none"
             />
           ) : null}
         </svg>
       </HotKeys>
     );
   }
-};
+}

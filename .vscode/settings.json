@@ -5,5 +5,8 @@
     "GLSL",
     "backend",
     "framebuffers"
-  ]
+  ],
+  "tslint.packageManager": "yarn",
+  "prettier.tslintIntegration": true,
+  "prettier.arrowParens": "always"
 }
