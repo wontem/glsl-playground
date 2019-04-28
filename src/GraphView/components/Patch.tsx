@@ -8,11 +8,10 @@ import {
   OpAnimationLoop,
   OpBuffer,
   OpCounter,
-  OpLifeCycle,
   OpLogger,
 } from '../operator/OpLifeCycle';
 import { GroupStore } from '../stores/GroupStore';
-import { OpNodeStore } from '../stores/OPNodeStore';
+import { OpNodeStore } from '../stores/OpNodeStore';
 import { PortStore } from '../stores/PortStore';
 import { ViewStateStore } from '../stores/ViewStateStore';
 import { HotKeys } from './HotKeys';

@@ -1,15 +1,25 @@
-import * as React from 'react';
 import { observer } from 'mobx-react';
+import * as React from 'react';
 // import { observable } from 'mobx';
 
-import { NodeStore } from '../stores/NodeStore';
-import { Port } from './Port';
-import { PortStore } from '../stores/PortStore';
-import { NodeType, PortType, PORT_HEIGHT, NODE_HEIGHT, PORT_WIDTH } from '../constants';
-import { GroupIOStore } from '../stores/GroupIOStore';
 import { IconBaseProps } from 'react-icons';
-import { MdSettingsInputComposite, MdCallReceived, MdCallMade } from 'react-icons/md';
+import {
+  MdCallMade,
+  MdCallReceived,
+  MdSettingsInputComposite,
+} from 'react-icons/md';
+import {
+  NODE_HEIGHT,
+  NodeType,
+  PORT_HEIGHT,
+  PORT_WIDTH,
+  PortType,
+} from '../constants';
+import { GroupIOStore } from '../stores/GroupIOStore';
 import { GroupStore } from '../stores/GroupStore';
+import { NodeStore } from '../stores/NodeStore';
+import { PortStore } from '../stores/PortStore';
+import { Port } from './Port';
 
 // import { DragSource } from 'react-dnd';
 
@@ -44,7 +54,8 @@ export class Node extends React.Component<Props, never> {
     if (node instanceof GroupIOStore) {
       if (node.type === NodeType.GROUP_INPUTS) {
         return MdCallReceived;
-      } else if (node.type === NodeType.GROUP_OUTPUTS) {
+      }
+      if (node.type === NodeType.GROUP_OUTPUTS) {
         return MdCallMade;
       }
     } else if (node instanceof GroupStore) {
@@ -52,30 +63,33 @@ export class Node extends React.Component<Props, never> {
     }
   }
 
-  renderDecorativeItems(): JSX.Element {
-    const {node} = this.props;
+  renderDecorativeItems(): React.ReactElement | null {
+    const { node } = this.props;
     const Icon = this.getIconComponent();
 
-    const line = node instanceof GroupIOStore ? (
-      <rect
-        y={node.type === NodeType.GROUP_INPUTS ? -PORT_HEIGHT / 2 : NODE_HEIGHT}
-        width={node.width}
-        height={PORT_HEIGHT / 2}
-        fill={'#29B6F6'}
-      />
-    ) : null;
+    const line =
+      node instanceof GroupIOStore ? (
+        <rect
+          y={
+            node.type === NodeType.GROUP_INPUTS ? -PORT_HEIGHT / 2 : NODE_HEIGHT
+          }
+          width={node.width}
+          height={PORT_HEIGHT / 2}
+          fill={'#29B6F6'}
+        />
+      ) : null;
 
     return (
       <>
         {line}
-        {
-          Icon && <Icon
+        {Icon && (
+          <Icon
             size={node.height / 2}
             x={node.width - node.height / 4}
             y={node.height / 4}
             color={'#29B6F6'}
           />
-        }
+        )}
       </>
     );
   }
@@ -86,7 +100,12 @@ export class Node extends React.Component<Props, never> {
     const ports: JSX.Element[] = [];
 
     node.ports.forEach((port, id) => {
-      const isEnabled = !(currentItem instanceof PortStore) || port === currentItem || (currentItem.type !== port.type && currentItem.dataType === port.dataType && !port.isLinked(currentItem));
+      const isEnabled =
+        !(currentItem instanceof PortStore) ||
+        port === currentItem ||
+        (currentItem.type !== port.type &&
+          currentItem.dataType === port.dataType &&
+          !port.isLinked(currentItem));
 
       ports.push(
         <Port
@@ -97,7 +116,7 @@ export class Node extends React.Component<Props, never> {
           onMouseEnter={this.props.onMouseEnter}
           onMouseLeave={this.props.onMouseLeave}
           isDisabled={!isEnabled}
-        />
+        />,
       );
     });
 
@@ -106,10 +125,10 @@ export class Node extends React.Component<Props, never> {
       node instanceof GroupIOStore &&
       !(currentItem.node instanceof GroupIOStore) &&
       currentItem.node !== node &&
-      (
-        (node.type === NodeType.GROUP_INPUTS && currentItem.type === PortType.INPUT) ||
-        (node.type === NodeType.GROUP_OUTPUTS && currentItem.type === PortType.OUTPUT)
-      )
+      ((node.type === NodeType.GROUP_INPUTS &&
+        currentItem.type === PortType.INPUT) ||
+        (node.type === NodeType.GROUP_OUTPUTS &&
+          currentItem.type === PortType.OUTPUT))
     ) {
       ports.push(
         <Port
@@ -120,7 +139,7 @@ export class Node extends React.Component<Props, never> {
           onMouseEnter={this.props.onMouseEnter}
           onMouseLeave={this.props.onMouseLeave}
           forceColor={currentItem.color}
-        />
+        />,
       );
     }
 
@@ -160,10 +179,12 @@ export class Node extends React.Component<Props, never> {
             fontWeight: 300,
           }}
           ref={this.textRef}
-        >{node.label}</text>
+        >
+          {node.label}
+        </text>
         {ports}
         {this.renderDecorativeItems()}
       </g>
     );
   }
-};
+}

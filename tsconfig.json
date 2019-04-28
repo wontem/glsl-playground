@@ -11,6 +11,7 @@
     // "noImplicitReturns": true,
     // "noImplicitThis": true,
     // "noUnusedLocals": true,
+    "forceConsistentCasingInFileNames": true,
     "module": "esnext",
     "moduleResolution": "node",
     "jsx": "react",

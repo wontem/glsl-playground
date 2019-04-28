@@ -2990,6 +2990,11 @@ mkdirp@0.5.x, mkdirp@^0.5.0, mkdirp@^0.5.1, mkdirp@~0.5.0:
   dependencies:
     minimist "0.0.8"
 
+mobx-react-lite@^2.0.0-alpha.1:
+  version "2.0.0-alpha.1"
+  resolved "https://registry.yarnpkg.com/mobx-react-lite/-/mobx-react-lite-2.0.0-alpha.1.tgz#3d784ed05398e14d27c6e086739fdafa78988202"
+  integrity sha512-OZHqqugptFU0YydFXBXaDhwZ9/9C4VsPbDUDYM4ykOa5oVtoQXlVlHaXe7sEFGsyPeodtZR71oFXL96mCdUi8Q==
+
 mobx-react@^5.4.3:
   version "5.4.3"
   resolved "https://registry.yarnpkg.com/mobx-react/-/mobx-react-5.4.3.tgz#6709b7dd89670c40e9815914ac2ca49cc02bfb47"

@@ -1,4 +1,5 @@
 import { setImmediate } from 'core-js/web/immediate';
+import { observable } from 'mobx';
 import { AnimationLoop } from '../../Editor/utils/AnimationLoop';
 import { PortType } from '../constants';
 import { NodeStore } from '../stores/NodeStore';
@@ -42,7 +43,7 @@ export abstract class OpLifeCycle<
   private initialized: boolean = false;
   private readonly defaultState: IOState<I> = {} as IOState<I>;
   private newState: Partial<IOState<I>> = {};
-  protected state: IOState<I> = {} as IOState<I>;
+  @observable public state: IOState<I> = {} as IOState<I>;
 
   get name(): string {
     return this.node.label;
@@ -67,15 +68,15 @@ export abstract class OpLifeCycle<
     (keyof I | keyof O) & string
   > = new WeakMap();
 
-  private getPortByName(
+  public getPortByName(
     type: PortType.INPUT,
     name: keyof I,
   ): PortStore<PortType.INPUT>;
-  private getPortByName(
+  public getPortByName(
     type: PortType.OUTPUT,
     name: keyof O,
   ): PortStore<PortType.OUTPUT>;
-  private getPortByName(type: PortType, name: string): PortStore {
+  public getPortByName(type: PortType, name: string): PortStore {
     return this.portIds[type][name];
   }
 
@@ -287,7 +288,7 @@ export class OpLogger extends OpLifeCycle<
   }
 
   opDidUpdate() {
-    console.log(this.state.data);
+    // console.log(this.state.data);
   }
 }
 
