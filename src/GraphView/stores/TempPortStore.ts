@@ -1,6 +1,6 @@
-import { PortStore } from './PortStore';
 import { PortType } from '../constants';
 import { GroupIOStore } from './GroupIOStore';
+import { PortStore } from './PortStore';
 
 export class TempPortStore extends PortStore {
   node!: GroupIOStore;

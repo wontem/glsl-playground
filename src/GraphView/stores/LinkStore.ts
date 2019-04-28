@@ -1,11 +1,11 @@
-import * as uuid from 'uuid/v4';
-import { PortStore } from './PortStore';
-import { GraphStore } from './GraphStore';
 import { action, observable } from 'mobx';
+import * as uuid from 'uuid/v4';
 import { PortType } from '../constants';
+import { GraphStore } from './GraphStore';
+import { PortStore } from './PortStore';
 
 export class LinkStore {
-  @observable graph: GraphStore;
+  @observable graph!: GraphStore;
   id: Readonly<string> = uuid();
   in: PortStore<PortType.OUTPUT>;
   out: PortStore<PortType.INPUT>;

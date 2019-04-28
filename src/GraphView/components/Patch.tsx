@@ -227,7 +227,7 @@ export class Patch extends React.Component<Props> {
             background: '#111',
           }}
           ref={this.svgElement}
-          viewBox={this.props.viewState.viewBox}
+          viewBox={this.props.viewState.viewBox} // TODO: maybe it's better to use transform
           preserveAspectRatio="none"
           width={this.props.viewState.width}
           height={this.props.viewState.height}

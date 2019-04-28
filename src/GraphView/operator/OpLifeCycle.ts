@@ -39,6 +39,7 @@ export abstract class OpLifeCycle<
   O extends IOTypes = IOTypes,
   C = any
 > {
+  private initialized: boolean = false;
   private readonly defaultState: IOState<I> = {} as IOState<I>;
   private newState: Partial<IOState<I>> = {};
   protected state: IOState<I> = {} as IOState<I>;
@@ -138,15 +139,15 @@ export abstract class OpLifeCycle<
 
     const ports: Set<PortStore> = new Set();
 
-    const recursiveTransform = (port: PortStore) => {
+    const recursiveWalk = (port: PortStore) => {
       if (port instanceof PortalPortStore) {
-        port.portalPorts && port.portalPorts.forEach(recursiveTransform);
+        port.portalPorts && port.portalPorts.forEach(recursiveWalk);
       } else {
         ports.add(port);
       }
     };
 
-    outPort.linkedPorts && outPort.linkedPorts.forEach(recursiveTransform);
+    outPort.linkedPorts && outPort.linkedPorts.forEach(recursiveWalk);
 
     ports.forEach((port) => {
       const op = (port.node as OpNodeStore).op;
@@ -194,11 +195,17 @@ export abstract class OpLifeCycle<
   }
 
   private performUpdate = () => {
-    if (this.isDirty) {
+    if (this.isDirty || !this.initialized) {
       const prevState = this.state;
       this.state = { ...prevState, ...this.newState };
       this.newState = {};
-      this.opDidUpdate && this.opDidUpdate(prevState);
+
+      if (!this.initialized) {
+        this.opDidCreate && this.opDidCreate();
+        this.initialized = true;
+      } else {
+        this.opDidUpdate && this.opDidUpdate(prevState);
+      }
     }
 
     this.triggersCallOrder.forEach((name) => {
@@ -218,6 +225,10 @@ export abstract class OpLifeCycle<
   // TODO: move it into interface
   opDidUpdate(prevState: IOState<I>): void {}
 
+  // TODO: move it into interface
+  opDidCreate(): void {}
+
+  // TODO: move it into interface
   opWillBeDestroyed(): void {}
 }
 
@@ -239,6 +250,10 @@ export class OpAnimationLoop extends OpLifeCycle<
     this.addOutTrigger('tick');
 
     this.loop.on('tick', () => this.triggerOut('tick'));
+  }
+
+  opDidCreate() {
+    this.loop.togglePlay(this.state.isActive);
   }
 
   opDidUpdate(
