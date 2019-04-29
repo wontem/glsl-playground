@@ -2,7 +2,6 @@ import { setImmediate } from 'core-js/web/immediate';
 import { observable } from 'mobx';
 import { AnimationLoop } from '../../Editor/utils/AnimationLoop';
 import { PortType } from '../constants';
-import { NodeStore } from '../stores/NodeStore';
 import { OpNodeStore } from '../stores/OpNodeStore';
 import { PortalPortStore } from '../stores/PortalPortStore';
 import { PortStore } from '../stores/PortStore';
@@ -12,14 +11,14 @@ type FilterFlags<Base, Condition> = {
   [Key in keyof Base]: Base[Key] extends Condition ? Key : never
 };
 
+type Trigger = () => void;
+
 type AllowedNames<Base, Condition> = FilterFlags<Base, Condition>[keyof Base];
 
 type SubType<Base, Condition> = Pick<Base, AllowedNames<Base, Condition>>;
 
 type IOTypes = Record<string, PortDataType>;
-type IOState<T extends IOTypes> = {
-  [K in keyof T]: Readonly<IDataTypes[T[K]]>
-};
+type IOState<T extends IOTypes> = { [K in keyof T]: IDataTypes[T[K]] };
 type ExcludeTrigger<T extends IOTypes> = SubType<
   T,
   Exclude<PortDataType, PortDataType.TRIGGER>
@@ -85,6 +84,7 @@ export abstract class OpLifeCycle<
     private context?: Readonly<C>,
   ) {
     node.op = this as any; // FIXME: fix any
+    this.scheduleUpdate();
   }
 
   private addPort(type: PortType, dataType: PortDataType, name: string) {
@@ -102,7 +102,7 @@ export abstract class OpLifeCycle<
   >(name: K, type: T, defaultValue: IDataTypes[T]): void {
     this.addPort(PortType.INPUT, type, name);
     this.defaultState[name] = defaultValue;
-    this.setInValue(name, defaultValue);
+    this.state[name] = defaultValue;
   }
 
   protected addOutPort<F extends ExcludeTrigger<O>, K extends keyof F & string>(
@@ -115,7 +115,7 @@ export abstract class OpLifeCycle<
   protected addInTrigger<
     F extends ExtractTrigger<I>,
     K extends keyof F & string
-  >(name: K, onTrigger: Readonly<() => void>): void {
+  >(name: K, onTrigger: Trigger): void {
     this.addPort(PortType.INPUT, PortDataType.TRIGGER, name);
     this.state[name] = onTrigger;
   }
@@ -210,7 +210,7 @@ export abstract class OpLifeCycle<
     }
 
     this.triggersCallOrder.forEach((name) => {
-      const trigger: () => void = this.state[name] as any; // TODO: fix any
+      const trigger: Trigger = this.state[name];
       trigger();
     });
 

@@ -1,3 +1,5 @@
+import { hot } from 'react-hot-loader/root';
+
 import * as React from 'react';
 
 import { Patch } from '../GraphView/components/Patch';
@@ -14,9 +16,11 @@ const viewState = new ViewStateStore(graph);
 viewState.width = 1024;
 viewState.height = 640;
 
-export const GraphView: React.FC = () => (
+const GraphView: React.FC = () => (
   <>
     <Patch viewState={viewState} />
     <Panel viewState={viewState} />
   </>
 );
+
+export const ObsGraphView = hot(GraphView);

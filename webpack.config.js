@@ -1,30 +1,31 @@
-const path = require('path');
-const webpack = require('webpack');
-const createStyledComponentsTransformer = require('typescript-plugin-styled-components').default;
-const HtmlWebpackPlugin = require('html-webpack-plugin');
+const path = require("path");
+// const webpack = require("webpack");
+// const createStyledComponentsTransformer = require("typescript-plugin-styled-components")
+//   .default;
+const HtmlWebpackPlugin = require("html-webpack-plugin");
 // const WebpackNotifierPlugin = require('webpack-notifier');
-const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
-// const { CheckerPlugin } = require('awesome-typescript-loader');
+const MonacoWebpackPlugin = require("monaco-editor-webpack-plugin");
+// const ForkTsCheckerWebpackPlugin = require("fork-ts-checker-webpack-plugin");
 
-const styledComponentsTransformer = createStyledComponentsTransformer();
+// const styledComponentsTransformer = createStyledComponentsTransformer();
 
 module.exports = {
-  context: path.resolve(__dirname, './src'),
-  mode: 'development',
-  devtool: 'inline-source-map',
+  context: path.resolve(__dirname, "./src"),
+  mode: "development",
+  devtool: "inline-source-map",
   entry: [
-    // 'react-hot-loader/patch', // activate HMR for React
+    "react-hot-loader/patch",
     // 'webpack-dev-server/client?http://localhost:8080',// bundle the client for webpack-dev-server and connect to the provided endpoint
     // 'webpack/hot/only-dev-server', // bundle the client for hot reloading, only- means to only hot reload for successful updates
-    './Editor/index.tsx'
+    "./Editor/index.tsx"
   ],
   devServer: {
-    hot: true,
+    hot: true
   },
   module: {
     defaultRules: [
       {
-        type: 'javascript/auto',
+        type: "javascript/auto",
         resolve: {}
       }
     ],
@@ -32,32 +33,54 @@ module.exports = {
       {
         test: /\.tsx?$/,
         exclude: /node_modules/,
-        loader: 'ts-loader',
+        loader: "babel-loader",
         options: {
-          transpileOnly: true,
-          getCustomTransformers: () => ({ before: [styledComponentsTransformer] }),
+          cacheDirectory: true,
+          babelrc: false,
+          plugins: [
+            "@babel/plugin-transform-runtime",
+            ["@babel/plugin-proposal-decorators", { legacy: true }],
+            ["@babel/plugin-proposal-class-properties", { loose: true }],
+            "@babel/proposal-object-rest-spread",
+            "react-hot-loader/babel"
+          ],
+          presets: [
+            [
+              "@babel/env",
+              {
+                targets: {
+                  chrome: "72"
+                }
+              }
+            ],
+            "@babel/preset-react",
+            "@babel/preset-typescript"
+          ]
+          // getCustomTransformers: () => ({
+          //   before: [styledComponentsTransformer]
+          // })
         }
       },
       {
         test: /\.glsl$/,
-        loader: 'raw-loader',
+        loader: "raw-loader"
       },
       {
         test: /\.(png|jpg|gif)$/,
-        loader: 'file-loader',
+        loader: "file-loader"
       },
       {
         test: /\.tmLanguage$/,
-        loader: 'raw-loader',
+        loader: "raw-loader"
       },
       {
         test: /\.css$/,
         use: [
           {
-            loader: 'style-loader',
+            loader: "style-loader"
           },
           {
-            loader: 'css-loader',
+            loader: "css-loader"
             // options: {
             //   modules: true,
             //   localIdentName: '[path][name]__[local]--[hash:base64:5]'
@@ -68,21 +91,28 @@ module.exports = {
     ]
   },
   resolve: {
-    extensions: [ '.tsx', '.ts', '.js' ]
+    extensions: [".tsx", ".ts", ".js"],
+    alias: {
+      "react-dom": "@hot-loader/react-dom"
+    }
   },
   output: {
-    filename: 'main.js',
-    path: path.resolve(__dirname, 'dist'),
-    publicPath: '/',
+    filename: "main.js",
+    path: path.resolve(__dirname, "dist"),
+    publicPath: "/"
   },
   plugins: [
     new HtmlWebpackPlugin(),
+    // new ForkTsCheckerWebpackPlugin({
+    //   tsconfig: "../tsconfig.json",
+    //   tslint: "../tslint.json"
+    // }),
     new MonacoWebpackPlugin({
-      languages: [],
-    }),
+      languages: []
+    })
     // new CheckerPlugin(),
-    new webpack.HotModuleReplacementPlugin(), // enable HMR globally
-    new webpack.NamedModulesPlugin(), // prints more readable module names in the browser console on HMR updates
+    // new webpack.HotModuleReplacementPlugin(), // enable HMR globally
+    // new webpack.NamedModulesPlugin() // prints more readable module names in the browser console on HMR updates
     // new WebpackNotifierPlugin(),
   ]
 };
