@@ -1,11 +1,22 @@
-import { MdFiberManualRecord, MdHighQuality, MdFullscreen, MdPlayArrow, MdPause, MdSkipPrevious, MdSave, MdFolderOpen, MdImage, MdCheck } from 'react-icons/md';
-import { StyledIcon } from './Icon';
 import * as React from 'react';
-import { GLSLView } from './GLSLView';
-import { Props, State } from './View.models';
+import {
+  MdCheck,
+  MdFiberManualRecord,
+  MdFolderOpen,
+  MdFullscreen,
+  MdHighQuality,
+  MdImage,
+  MdPause,
+  MdPlayArrow,
+  MdSave,
+  MdSkipPrevious,
+} from 'react-icons/md';
+import { Input, styled } from 'reakit';
 import { ProjectData } from '../actions/canvasView';
-import { styled, Input } from 'reakit';
 import { AnimationLoop } from '../utils/AnimationLoop';
+import { GLSLView } from './GLSLView';
+import { StyledIcon } from './Icon';
+import { Props, State } from './View.models';
 
 const Panel = styled.div`
   display: flex;
@@ -48,7 +59,6 @@ const GLSLViewStyled = styled(GLSLView)`
   max-width: 100%;
 `;
 
-
 const saveFile = (() => {
   const a = document.createElement('a');
 
@@ -63,7 +73,11 @@ const saveFile = (() => {
 
 const saveImage = (canvas: HTMLCanvasElement, name: string) => {
   canvas.toBlob((blob) => {
-    saveFile(blob, name);
+    if (blob) {
+      saveFile(blob, name);
+    } else {
+      console.warn('Cannot save the image');
+    }
   });
 };
 
@@ -77,13 +91,13 @@ const getMousePos = (e: React.MouseEvent): [number, number] => {
   const x = (e.clientX - rect.left) / rect.width;
   const y = (e.clientY - rect.top) / rect.height;
 
-  return [x, 1. - y];
-}
+  return [x, 1 - y];
+};
 
 export class View extends React.Component<Props, State> {
   private animationLoop: AnimationLoop = new AnimationLoop();
   private viewRef: React.RefObject<GLSLView>;
-  private recorder: MediaRecorder;
+  private recorder!: MediaRecorder;
 
   constructor(props: Props) {
     super(props);
@@ -142,7 +156,8 @@ export class View extends React.Component<Props, State> {
     if (prevState.isPlaying !== this.state.isPlaying) {
       if (this.state.isPlaying) {
         this.setState({
-          startTime: this.state.startTime + performance.now() - this.state.currentTime,
+          startTime:
+            this.state.startTime + performance.now() - this.state.currentTime,
           prevTime: performance.now(),
         });
       }
@@ -152,14 +167,16 @@ export class View extends React.Component<Props, State> {
   }
 
   componentDidMount() {
-    this.recorder = new MediaRecorder((this.viewRef.current.getCanvas() as any).captureStream());
+    this.recorder = new MediaRecorder(
+      (this.viewRef.current!.getCanvas() as any).captureStream(),
+    );
     this.recorder.ondataavailable = (event) => {
       saveFile(event.data, `${this.state.name}_${Date.now()}.webm`);
     };
   }
 
   componentWillUnmount() {
-    this.recorder = null;
+    delete this.recorder;
   }
 
   onMouseDown: React.MouseEventHandler<HTMLCanvasElement> = (e) => {
@@ -194,32 +211,51 @@ export class View extends React.Component<Props, State> {
 
   render() {
     const time = (this.state.currentTime - this.state.startTime) / 1000;
-    const pixelRatio = this.state.isHD ? 2. : 1.;
+    const pixelRatio = this.state.isHD ? 2 : 1;
 
     return (
       <React.Fragment>
         <Panel>
-          <StyledIcon><label style={{ cursor: 'pointer' }}><MdFolderOpen /><input
-            style={{ display: 'none' }}
-            onChange={(event) => {
-              const reader = new FileReader();
-              const file = event.target.files[0];
+          <StyledIcon>
+            <label style={{ cursor: 'pointer' }}>
+              <MdFolderOpen />
+              <input
+                style={{ display: 'none' }}
+                onChange={(event) => {
+                  if (!event.target.files) {
+                    return;
+                  }
 
-              reader.addEventListener('load', (event) => {
-                const jsonString = (event.target as FileReader).result as string;
-                const project: ProjectData = JSON.parse(jsonString);
+                  const reader = new FileReader();
+                  const file = event.target.files[0];
 
-                this.props.setProjectName(file.name);
-                this.props.setProject(project);
-                this.setState({
-                  name: /(.*)_\d+\.json/.exec(file.name)[1],
-                });
-              });
-              reader.readAsText(file);
-            }}
-            type='file'
-            accept='application/json'
-          /></label></StyledIcon>
+                  reader.addEventListener('load', (event) => {
+                    const jsonString = (event.target as FileReader)
+                      .result as string;
+                    const project: ProjectData = JSON.parse(jsonString);
+
+                    this.props.setProjectName(file.name);
+                    this.props.setProject(project);
+
+                    let name = file.name;
+
+                    try {
+                      name = /(.*)_\d+\.json/.exec(file.name)![1];
+                    } catch (error) {
+                      console.warn(error);
+                    }
+
+                    this.setState({
+                      name,
+                    });
+                  });
+                  reader.readAsText(file);
+                }}
+                type="file"
+                accept="application/json"
+              />
+            </label>
+          </StyledIcon>
           <HeaderInput
             value={this.state.name}
             onChange={(event: any) => {
@@ -228,17 +264,32 @@ export class View extends React.Component<Props, State> {
               });
             }}
           />
-          <StyledIcon onClick={() => {
-            saveFile(createProjectFile({
-              buffers: this.props.buffers,
-              textures: this.props.textures,
-              buffersOrder: this.props.buffersOrder,
-              outputBuffer: this.props.outputBuffer,
-            }), `${this.state.name}_${Date.now()}.json`);
-          }} ><MdSave /></StyledIcon>
-          <StyledIcon onClick={() => {
-            saveImage(this.viewRef.current.getCanvas(), `${this.state.name}_${Date.now()}.png`);
-          }} ><MdImage /></StyledIcon>
+          <StyledIcon
+            onClick={() => {
+              saveFile(
+                createProjectFile({
+                  buffers: this.props.buffers,
+                  textures: this.props.textures,
+                  buffersOrder: this.props.buffersOrder,
+                  outputBuffer: this.props.outputBuffer,
+                }),
+                `${this.state.name}_${Date.now()}.json`,
+              );
+            }}
+          >
+            <MdSave />
+          </StyledIcon>
+          <StyledIcon
+            onClick={() => {
+              const canvas = this.viewRef.current!.getCanvas();
+
+              if (canvas) {
+                saveImage(canvas, `${this.state.name}_${Date.now()}.png`);
+              }
+            }}
+          >
+            <MdImage />
+          </StyledIcon>
         </Panel>
         <CanvasWrapper>
           <GLSLViewStyled
@@ -249,44 +300,17 @@ export class View extends React.Component<Props, State> {
             width={this.state.currentWidth * pixelRatio}
             height={this.state.currentHeight * pixelRatio}
             onError={this.props.onError}
-            uniforms={[
-              {
-                name: 'u_mouse',
-                method: '2f',
-                value: [...this.state.mouse],
-              },
-              {
-                name: 'u_mouse_start',
-                method: '2f',
-                value: [...this.state.mouseStart],
-              },
-              {
-                name: 'u_mouse_end',
-                method: '2f',
-                value: [...this.state.mouseEnd],
-              },
-              {
-                name: 'u_mouse_pressed',
-                method: '1i',
-                value: [this.state.isMousePressed ? 1 : 0],
-              },
-              {
-                name: 'u_time',
-                method: '1f',
-                value: [time],
-              },
-              {
-                name: 'u_dela_time',
-                method: '1f',
-                value: [(this.state.currentTime - this.state.prevTime) / 1000],
-              },
-              {
-                name: 'u_frame',
-                method: '1i',
-                value: [this.state.currentFrame],
-              }
-            ]}
-
+            uniforms={{
+              u_mouse: this.state.mouse,
+              u_mouse_start: this.state.mouseStart,
+              u_mouse_end: this.state.mouseEnd,
+              u_mouse_pressed: [this.state.isMousePressed ? 1 : 0],
+              u_time: [time],
+              u_delta_time: [
+                (this.state.currentTime - this.state.prevTime) / 1000,
+              ],
+              u_frame: [this.state.currentFrame],
+            }}
             onMouseDown={this.onMouseDown}
             onMouseMove={this.onMouseMove}
             onMouseUp={this.onMouseUp}
@@ -297,7 +321,7 @@ export class View extends React.Component<Props, State> {
           <HeaderInput
             value={this.state.width}
             onChange={(event: any) => {
-              const value = parseInt(event.target.value);
+              const value = parseInt(event.target.value, 10);
               if (!isNaN(value) && value > 0) {
                 this.setState({
                   width: value,
@@ -308,7 +332,7 @@ export class View extends React.Component<Props, State> {
           <HeaderInput
             value={this.state.height}
             onChange={(event: any) => {
-              const value = parseInt(event.target.value);
+              const value = parseInt(event.target.value, 10);
               if (!isNaN(value) && value > 0) {
                 this.setState({
                   height: value,
@@ -323,35 +347,65 @@ export class View extends React.Component<Props, State> {
                 currentHeight: this.state.height,
               });
             }}
-          ><MdCheck /></StyledIcon>
+          >
+            <MdCheck />
+          </StyledIcon>
         </Panel>
         <Panel>
-          <StyledIcon onClick={() => this.resetAnimation()}><MdSkipPrevious /></StyledIcon>
-          <StyledIcon onClick={() => this.setState({ isPlaying: !this.state.isPlaying })}>
+          <StyledIcon onClick={() => this.resetAnimation()}>
+            <MdSkipPrevious />
+          </StyledIcon>
+          <StyledIcon
+            onClick={() => this.setState({ isPlaying: !this.state.isPlaying })}
+          >
             {this.state.isPlaying ? <MdPause /> : <MdPlayArrow />}
           </StyledIcon>
-          <StyledIcon isActive={this.state.isRecording} color='red' onClick={() => {
-            if (this.state.isRecording) {
-              this.recorder.stop();
-            } else {
-              this.recorder.start();
-            }
+          <StyledIcon
+            isActive={this.state.isRecording}
+            color="red"
+            onClick={() => {
+              if (this.state.isRecording) {
+                this.recorder.stop();
+              } else {
+                this.recorder.start();
+              }
 
-            this.setState({
-              isRecording: !this.state.isRecording,
-            });
-          }}><MdFiberManualRecord /></StyledIcon>
+              this.setState({
+                isRecording: !this.state.isRecording,
+              });
+            }}
+          >
+            <MdFiberManualRecord />
+          </StyledIcon>
           <Info>{time.toFixed(3)}</Info>
           <Info>{this.state.currentFrame}</Info>
-          <Info>{(this.state.isPlaying ? this.animationLoop.getFPS() : 0).toFixed(1)}</Info>
-          <StyledIcon color='#00a6ff' isActive={this.state.isHD} onClick={() => {
-            this.setState({
-              isHD: !this.state.isHD,
-            });
-          }}><MdHighQuality /></StyledIcon>
-          <StyledIcon onClick={() => {
-            this.viewRef.current.getCanvas().requestFullscreen();
-          }} ><MdFullscreen /></StyledIcon>
+          <Info>
+            {(this.state.isPlaying ? this.animationLoop.getFPS() : 0).toFixed(
+              1,
+            )}
+          </Info>
+          <StyledIcon
+            color="#00a6ff"
+            isActive={this.state.isHD}
+            onClick={() => {
+              this.setState({
+                isHD: !this.state.isHD,
+              });
+            }}
+          >
+            <MdHighQuality />
+          </StyledIcon>
+          <StyledIcon
+            onClick={() => {
+              const canvas = this.viewRef.current!.getCanvas();
+
+              if (canvas) {
+                canvas.requestFullscreen();
+              }
+            }}
+          >
+            <MdFullscreen />
+          </StyledIcon>
         </Panel>
       </React.Fragment>
     );

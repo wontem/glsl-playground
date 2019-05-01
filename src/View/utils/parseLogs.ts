@@ -1,4 +1,4 @@
-const REGEX_SHADER_LOG = /^(\w+):\s(\d+):(\d+):\s'(.*?)'\s:\s(.*)$/mg;
+const REGEX_SHADER_LOG = /^(\w+):\s(\d+):(\d+):\s'(.*?)'\s:\s(.*)$/gm;
 
 interface ParsedLogString {
   fullMessage: string;

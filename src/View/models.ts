@@ -5,13 +5,15 @@ export enum ViewEventType {
 
 export interface ViewEvent {
   type: ViewEventType;
-  message: string;
+  message: string | null;
 }
 
-export interface Uniform {
+export type UniformValues = Record<string, number[]>;
+
+export interface UniformInfo {
   name: string;
-  method: string;
-  value: number[];
+  type: number;
+  location: WebGLUniformLocation;
 }
 
 export interface Attribute {
@@ -34,7 +36,12 @@ export enum Wrap {
 }
 
 export interface TextureState {
-  source: ImageBitmap | ImageData | HTMLImageElement | HTMLCanvasElement | HTMLVideoElement;
+  source:
+    | ImageBitmap
+    | ImageData
+    | HTMLImageElement
+    | HTMLCanvasElement
+    | HTMLVideoElement;
   resolution: Resolution;
   flipY: boolean;
   filter: Filter;

@@ -1,5 +1,5 @@
-import { Texture } from './Texture';
 import { ReadonlyTexture, Resolution } from './models';
+import { Texture } from './Texture';
 
 class Framebuffer {
   private fbo: WebGLFramebuffer;
@@ -8,11 +8,17 @@ class Framebuffer {
     private gl: WebGL2RenderingContext,
     private textureInput: Texture,
     private textureOutput: Texture,
-   ) {
-    this.fbo = gl.createFramebuffer();
+  ) {
+    this.fbo = gl.createFramebuffer()!;
     this.activate();
 
-    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, textureOutput.getTexture(), 0);
+    gl.framebufferTexture2D(
+      gl.FRAMEBUFFER,
+      gl.COLOR_ATTACHMENT0,
+      gl.TEXTURE_2D,
+      textureOutput.getTexture(),
+      0,
+    );
   }
 
   public activate() {
@@ -56,19 +62,22 @@ class Framebuffer {
   public resize(resolution: Resolution): void {
     const pixelsData = this.getPixelsData(resolution);
 
-    this.textureInput.setData(new Uint8Array(resolution[0] * resolution[1] * 4), resolution);
+    this.textureInput.setData(
+      new Uint8Array(resolution[0] * resolution[1] * 4),
+      resolution,
+    );
     this.textureInput.setSubImage(pixelsData.pixels, pixelsData.resolution);
   }
 
   public destroy(): void {
     this.gl.deleteFramebuffer(this.fbo);
-    this.fbo = null;
+    delete this.fbo;
 
     this.textureInput.destroy();
     this.textureOutput.destroy();
 
-    this.textureInput = null;
-    this.textureOutput = null;
+    delete this.textureInput;
+    delete this.textureOutput;
   }
 }
 

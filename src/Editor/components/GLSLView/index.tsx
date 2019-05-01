@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { View } from '../../../View';
-import { ViewEvent, Uniform, Resolution } from '../../../View/models';
+import { Resolution, UniformValues, ViewEvent } from '../../../View/models';
 // TODO: move typing into the GLSLView component models
 import { TextureState } from '../../reducers/canvasView';
 import { bitmapLoader } from '../../utils/bitmapLoader';
@@ -12,7 +12,7 @@ interface GLSLViewProps {
   outputBuffer: string;
   width: number;
   height: number;
-  uniforms: Uniform[];
+  uniforms: UniformValues;
   textures: Record<string, TextureState>;
   onError: (errors: UpdateError[]) => void;
   onMouseDown: React.MouseEventHandler<HTMLCanvasElement>;
@@ -68,7 +68,7 @@ export class GLSLView extends React.PureComponent<GLSLViewProps> {
   private canvas: React.RefObject<HTMLCanvasElement>;
   private view!: View;
 
-  getCanvas() {
+  getCanvas(): HTMLCanvasElement | null {
     return this.canvas.current;
   }
 
@@ -86,7 +86,7 @@ export class GLSLView extends React.PureComponent<GLSLViewProps> {
 
     const updateBuffer = (name: string, source: string) => {
       const updateErrors = this.view.updateBuffer(name, source);
-      errors = [...errors, ...updateErrors.map(error => ({ name, error }))];
+      errors = [...errors, ...updateErrors.map((error) => ({ name, error }))];
     };
 
     const isChanged = diffObjects(prevBuffers, currentBuffers, {
@@ -108,8 +108,8 @@ export class GLSLView extends React.PureComponent<GLSLViewProps> {
   }
 
   private updateUniforms(
-    prevUniforms: Uniform[],
-    currentUniforms: Uniform[],
+    prevUniforms: UniformValues,
+    currentUniforms: UniformValues,
   ): boolean {
     if (prevUniforms === currentUniforms) {
       return false;
@@ -124,9 +124,14 @@ export class GLSLView extends React.PureComponent<GLSLViewProps> {
 
   // };
 
-  private updateTextureBitmap = async (name: string, { url, ...textureState }: TextureState) => {
+  private updateTextureBitmap = async (
+    name: string,
+    { url, ...textureState }: TextureState,
+  ) => {
     try {
-      const bitmap = await bitmapLoader.download(name, url, { imageOrientation: textureState.flipY ? 'flipY' : 'none' });
+      const bitmap = await bitmapLoader.download(name, url, {
+        imageOrientation: textureState.flipY ? 'flipY' : 'none',
+      });
       this.view.updateTexture(name, {
         source: bitmap,
         ...textureState,
@@ -192,8 +197,10 @@ export class GLSLView extends React.PureComponent<GLSLViewProps> {
   componentDidUpdate(prevProps: GLSLViewProps) {
     let isChanged = false;
 
-    isChanged = this.updateBuffers(prevProps.buffers, this.props.buffers) || isChanged;
-    isChanged = this.updateTextures(prevProps.textures, this.props.textures) || isChanged;
+    isChanged =
+      this.updateBuffers(prevProps.buffers, this.props.buffers) || isChanged;
+    isChanged =
+      this.updateTextures(prevProps.textures, this.props.textures) || isChanged;
 
     if (prevProps.outputBuffer !== this.props.outputBuffer) {
       this.view.setBufferToOutput(this.props.outputBuffer);
@@ -213,7 +220,8 @@ export class GLSLView extends React.PureComponent<GLSLViewProps> {
       isChanged = true;
     }
 
-    isChanged = this.updateUniforms(prevProps.uniforms, this.props.uniforms) || isChanged;
+    isChanged =
+      this.updateUniforms(prevProps.uniforms, this.props.uniforms) || isChanged;
 
     if (isChanged) {
       this.view.render();

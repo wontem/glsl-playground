@@ -4,12 +4,8 @@ import * as React from 'react';
 import { NodeType, PortType, Tool } from '../constants';
 import { fork } from '../helpers/fork';
 import { PrioritizedArray } from '../helpers/PrioritizedArray';
-import {
-  OpAnimationLoop,
-  OpBuffer,
-  OpCounter,
-  OpLogger,
-} from '../operator/OpLifeCycle';
+import { OpAnimationLoop } from '../operator/OpAnimationLoop';
+import { OpBuffer, OpCounter, OpLogger } from '../operator/OpLifeCycle';
 import { GroupStore } from '../stores/GroupStore';
 import { OpNodeStore } from '../stores/OpNodeStore';
 import { PortStore } from '../stores/PortStore';

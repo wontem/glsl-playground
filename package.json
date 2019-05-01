@@ -50,6 +50,7 @@
   },
   "dependencies": {
     "@hot-loader/react-dom": "^16.8.6",
+    "@types/styled-components": "^4.1.14",
     "classnames": "^2.2.6",
     "core-js": "^3.0.1",
     "gl-matrix": "^3.0.0",
