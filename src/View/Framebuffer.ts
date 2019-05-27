@@ -1,5 +1,5 @@
-import { Texture } from './Texture';
-import { ReadonlyTexture, Resolution } from './models';
+import { Texture } from "./Texture";
+import { ReadonlyTexture, Resolution, Filter } from "./models";
 
 class Framebuffer {
   private fbo: WebGLFramebuffer;
@@ -7,12 +7,18 @@ class Framebuffer {
   constructor(
     private gl: WebGL2RenderingContext,
     private textureInput: Texture,
-    private textureOutput: Texture,
-   ) {
+    private textureOutput: Texture
+  ) {
     this.fbo = gl.createFramebuffer();
     this.activate();
 
-    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, textureOutput.getTexture(), 0);
+    gl.framebufferTexture2D(
+      gl.FRAMEBUFFER,
+      gl.COLOR_ATTACHMENT0,
+      gl.TEXTURE_2D,
+      textureOutput.getTexture(),
+      0
+    );
   }
 
   public activate() {
@@ -28,7 +34,7 @@ class Framebuffer {
   }
 
   public getPixelsData(
-    resolution: Resolution = this.textureOutput.getResolution(),
+    resolution: Resolution = this.textureOutput.getResolution()
   ): {
     pixels: Uint8Array;
     resolution: Resolution;
@@ -41,7 +47,7 @@ class Framebuffer {
 
     const [width, height]: Resolution = [
       Math.min(resolution[0], currentTextureResolution[0]),
-      Math.min(resolution[1], currentTextureResolution[1]),
+      Math.min(resolution[1], currentTextureResolution[1])
     ];
 
     const pixels = new Uint8Array(width * height * 4);
@@ -49,14 +55,17 @@ class Framebuffer {
 
     return {
       pixels,
-      resolution: [width, height],
+      resolution: [width, height]
     };
   }
 
   public resize(resolution: Resolution): void {
     const pixelsData = this.getPixelsData(resolution);
 
-    this.textureInput.setData(new Uint8Array(resolution[0] * resolution[1] * 4), resolution);
+    this.textureInput.setData(
+      new Uint8Array(resolution[0] * resolution[1] * 4),
+      resolution
+    );
     this.textureInput.setSubImage(pixelsData.pixels, pixelsData.resolution);
   }
 
@@ -79,7 +88,7 @@ export class PingPongFramebuffer implements ReadonlyTexture {
   constructor(
     private gl: WebGL2RenderingContext,
     private resolution: Resolution = [1, 1],
-    private unit: number = Texture.getNewUnit(gl),
+    private unit: number = Texture.getNewUnit(gl)
   ) {
     const texture0 = new Texture(gl, resolution, this.unit);
     const texture1 = new Texture(gl, resolution, this.unit);
@@ -104,6 +113,8 @@ export class PingPongFramebuffer implements ReadonlyTexture {
   }
 
   public swap(): void {
+    this.currentFB["textureOutput"].setFilter(Filter.MIPMAP);
+
     [this.currentFB, this.alternativeFB] = [this.alternativeFB, this.currentFB];
 
     this.currentFB.activate();
