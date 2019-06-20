@@ -166,13 +166,8 @@ export class Program {
     this.uniformState.setUniforms(uniforms);
   }
 
-  public render(
-    [width, height]: Resolution,
-    framebuffer: WebGLFramebuffer | null,
-  ) {
+  public render([width, height]: Resolution) {
     const gl = this.gl;
-
-    gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
 
     gl.viewport(0, 0, width, height);
 
@@ -207,6 +202,23 @@ export class Program {
     });
 
     return vao;
+  }
+
+  public getUniformsInfo(): WebGLActiveInfo[] {
+    const gl = this.gl;
+    const numUniforms = gl.getProgramParameter(
+      this.program,
+      gl.ACTIVE_UNIFORMS,
+    );
+
+    const infoArray: WebGLActiveInfo[] = [];
+
+    for (let i = 0; i < numUniforms; i += 1) {
+      const info = gl.getActiveUniform(this.program, i)!;
+      infoArray.push(info);
+    }
+
+    return infoArray;
   }
 
   public update(fragmentSource: string): ViewEvent[] {

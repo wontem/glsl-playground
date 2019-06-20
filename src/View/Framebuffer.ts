@@ -115,7 +115,7 @@ export class PingPongFramebuffer implements ReadonlyTexture {
   public swap(): void {
     [this.currentFB, this.alternativeFB] = [this.alternativeFB, this.currentFB];
 
-    this.currentFB.activate();
+    this.activate();
   }
 
   public getUnit(): number {

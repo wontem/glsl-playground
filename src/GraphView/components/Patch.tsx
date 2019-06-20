@@ -1,11 +1,15 @@
 import { action } from 'mobx';
 import { observer } from 'mobx-react';
 import * as React from 'react';
+import { GLContext } from '../../GLContext';
 import { NodeType, PortType, Tool } from '../constants';
 import { fork } from '../helpers/fork';
 import { PrioritizedArray } from '../helpers/PrioritizedArray';
 import { OpAnimationLoop } from '../operator/OpAnimationLoop';
-import { OpBuffer, OpCounter, OpLogger } from '../operator/OpLifeCycle';
+import { OpGLProgram } from '../operator/OpGLProgram';
+import { OpGLRenderToMain } from '../operator/OpGLRenderMain';
+import { OpGLRenderToTexture } from '../operator/OpGLRenderToTexture';
+import { OpCounter, OpLogger } from '../operator/OpLifeCycle';
 import { GroupStore } from '../stores/GroupStore';
 import { OpNodeStore } from '../stores/OpNodeStore';
 import { PortStore } from '../stores/PortStore';
@@ -16,7 +20,14 @@ import { LinkRaw } from './LinkRaw';
 import { Node } from './Node';
 
 let kek = 0; // FIXME: remove
-const OP_CONSTRUCTORS = [OpAnimationLoop, OpLogger, OpCounter, OpBuffer];
+const OP_CONSTRUCTORS = [
+  OpGLProgram,
+  OpGLRenderToMain,
+  OpAnimationLoop,
+  OpCounter,
+  OpLogger,
+  OpGLRenderToTexture,
+];
 
 interface Props {
   viewState: ViewStateStore; // TODO: maybe move to Patch as property
@@ -24,6 +35,7 @@ interface Props {
 
 @observer
 export class Patch extends React.Component<Props> {
+  static contextType = GLContext;
   private svgElement: React.RefObject<SVGSVGElement> = React.createRef();
 
   mouseCoordinate(e: React.MouseEvent): [number, number] {
@@ -49,7 +61,7 @@ export class Patch extends React.Component<Props> {
       default: () => {
         const OpConstructor = OP_CONSTRUCTORS[kek++ % OP_CONSTRUCTORS.length];
         const node = new OpNodeStore();
-        const op = new OpConstructor(node);
+        const op = new OpConstructor(node, this.context[0]);
 
         node.center = this.props.viewState.toCanvasCoordinate(
           this.mouseCoordinate(e),
@@ -209,7 +221,6 @@ export class Patch extends React.Component<Props> {
           }),
         }}
         style={{
-          position: 'absolute',
           outline: 'none',
         }}
       >

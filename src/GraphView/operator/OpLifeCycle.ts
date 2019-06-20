@@ -1,48 +1,23 @@
 import { setImmediate } from 'core-js/web/immediate';
 import { observable } from 'mobx';
-import { AnimationLoop } from '../../Editor/utils/AnimationLoop';
 import { PortType } from '../constants';
 import { OpNodeStore } from '../stores/OpNodeStore';
 import { PortalPortStore } from '../stores/PortalPortStore';
 import { PortStore } from '../stores/PortStore';
 import { IDataTypes, PortDataType } from './constants';
 
-type FilterFlags<Base, Condition> = {
-  [Key in keyof Base]: Base[Key] extends Condition ? Key : never
+type Trigger = () => void;
+type IOTypes = Record<string, PortDataType>;
+export type IOState<T extends IOTypes = IOTypes> = {
+  [K in keyof T]: IDataTypes[T[K]]
 };
 
-type Trigger = () => void;
-
-type AllowedNames<Base, Condition> = FilterFlags<Base, Condition>[keyof Base];
-
-type SubType<Base, Condition> = Pick<Base, AllowedNames<Base, Condition>>;
-
-type IOTypes = Record<string, PortDataType>;
-export type IOState<T extends IOTypes> = { [K in keyof T]: IDataTypes[T[K]] };
-type ExcludeTrigger<T extends IOTypes> = SubType<
-  T,
-  Exclude<PortDataType, PortDataType.TRIGGER>
->;
-type ExtractTrigger<T extends IOTypes> = SubType<T, PortDataType.TRIGGER>;
-
-type ShaderInputTypes =
-  | Record<string, PortDataType.TEXTURE>
-  | Record<string, PortDataType.BOOL>
-  | Record<string, PortDataType.FLOAT>
-  | Record<string, PortDataType.INT>
-  | Record<string, PortDataType.VEC2>
-  | Record<string, PortDataType.VEC3>
-  | Record<string, PortDataType.VEC4>;
-
-export abstract class OpLifeCycle<
-  I extends IOTypes = IOTypes,
-  O extends IOTypes = IOTypes,
-  C = any
-> {
+export abstract class OpLifeCycle {
   private initialized: boolean = false;
-  private readonly defaultState: IOState<I> = {} as IOState<I>;
-  private newState: Partial<IOState<I>> = {};
-  @observable public state: IOState<I> = {} as IOState<I>;
+  private readonly defaultState: IOState = {};
+  private newState: Partial<IOState> = {};
+  @observable public state: IOState = {};
+  @observable public outputState: IOState = {};
 
   get name(): string {
     return this.node.label;
@@ -52,42 +27,53 @@ export abstract class OpLifeCycle<
     this.node.label = name;
   }
 
+  get inputs(): [string, PortStore<PortType.INPUT>][] {
+    const inputs = this.portIds[PortType.INPUT];
+    return Object.keys(inputs).map((name) => [name, inputs[name]]);
+  }
+
+  get outputs(): [string, PortStore<PortType.OUTPUT>][] {
+    const outputs = this.portIds[PortType.OUTPUT];
+    return Object.keys(outputs).map((name) => [name, outputs[name]]);
+  }
+
   // private readonly outState: IOState<ExcludeTrigger<O>> = {} as any;
 
   private readonly portIds: {
-    [PortType.INPUT]: Record<keyof I, PortStore>;
-    [PortType.OUTPUT]: Record<keyof O, PortStore>;
+    [PortType.INPUT]: Record<string, PortStore<PortType.INPUT>>;
+    [PortType.OUTPUT]: Record<string, PortStore<PortType.OUTPUT>>;
   } = {
-    [PortType.INPUT]: {} as any,
-    [PortType.OUTPUT]: {} as any,
+    [PortType.INPUT]: {},
+    [PortType.OUTPUT]: {},
   };
 
-  private readonly portNames: WeakMap<
-    PortStore,
-    (keyof I | keyof O) & string
-  > = new WeakMap();
+  private readonly portNames: WeakMap<PortStore, string> = new WeakMap();
 
   public getPortByName(
     type: PortType.INPUT,
-    name: keyof I,
+    name: string,
   ): PortStore<PortType.INPUT>;
+
   public getPortByName(
     type: PortType.OUTPUT,
-    name: keyof O,
+    name: string,
   ): PortStore<PortType.OUTPUT>;
+
   public getPortByName(type: PortType, name: string): PortStore {
     return this.portIds[type][name];
   }
 
-  constructor(
-    private readonly node: OpNodeStore,
-    private context?: Readonly<C>,
-  ) {
-    node.op = this as any; // FIXME: fix any
+  constructor(private readonly node: OpNodeStore) {
+    node.op = this;
     this.scheduleUpdate();
   }
 
-  private addPort(type: PortType, dataType: PortDataType, name: string) {
+  private addPort(
+    type: PortType,
+    dataType: PortDataType,
+    name: string,
+    label?: string,
+  ) {
     const port = new PortStore(this.node, type, dataType);
     this.node.addPort(port);
 
@@ -95,46 +81,49 @@ export abstract class OpLifeCycle<
     this.portNames.set(port, name);
   }
 
-  protected addInPort<
-    F extends ExcludeTrigger<I>,
-    K extends keyof ExcludeTrigger<I> & string,
-    T extends F[K]
-  >(name: K, type: T, defaultValue: IDataTypes[T]): void {
-    this.addPort(PortType.INPUT, type, name);
+  protected addInPort<T extends PortDataType>(
+    name: string,
+    type: T,
+    defaultValue: IDataTypes[T],
+    label?: string,
+  ): void {
+    this.addPort(PortType.INPUT, type, name, label);
     this.defaultState[name] = defaultValue;
     this.state[name] = defaultValue;
   }
 
-  protected addOutPort<F extends ExcludeTrigger<O>, K extends keyof F & string>(
-    name: K,
-    type: F[K],
+  protected addOutPort<T extends PortDataType>(
+    name: string,
+    type: T,
+    initialValue: IDataTypes[T],
+    label?: string,
   ): void {
-    this.addPort(PortType.OUTPUT, type, name);
+    this.addPort(PortType.OUTPUT, type, name, label);
+    this.outputState[name] = initialValue;
   }
 
-  protected addInTrigger<
-    F extends ExtractTrigger<I>,
-    K extends keyof F & string
-  >(name: K, onTrigger: Trigger): void {
-    this.addPort(PortType.INPUT, PortDataType.TRIGGER, name);
+  protected addInTrigger(
+    name: string,
+    onTrigger: Trigger,
+    label?: string,
+  ): void {
+    this.addPort(PortType.INPUT, PortDataType.TRIGGER, name, label);
     this.state[name] = onTrigger;
   }
 
-  protected addOutTrigger(
-    name: AllowedNames<O, PortDataType.TRIGGER> & string,
-  ): void {
-    this.addPort(PortType.OUTPUT, PortDataType.TRIGGER, name);
+  protected addOutTrigger(name: string, label?: string): void {
+    this.addPort(PortType.OUTPUT, PortDataType.TRIGGER, name, label);
   }
 
   // FIXME: implement it
-  protected removeIn(name: keyof I & string): void {}
+  protected removeIn(name: string): void {}
 
   // FIXME: implement it
-  protected removeOut(name: keyof O & string): void {}
+  protected removeOut(name: string): void {}
 
   private forEachLinkedOutPort(
-    name: keyof O,
-    callback: (op: OpLifeCycle<any, any>, name: string) => void,
+    name: string,
+    callback: (op: OpLifeCycle, name: string) => void,
   ) {
     const outPort = this.getPortByName(PortType.OUTPUT, name);
 
@@ -157,37 +146,33 @@ export abstract class OpLifeCycle<
     });
   }
 
-  protected sendOutPortValue<K extends keyof ExcludeTrigger<O>>(
-    name: K & string,
-    value: IDataTypes[O[K]],
-  ): void {
+  public sendOutPortValue(name: string, value: any): void {
+    this.outputState[name] = value;
+
     this.forEachLinkedOutPort(name, (op, inName) => {
       op.setInValue(inName, value);
     });
   }
 
-  triggerIn(name: keyof ExtractTrigger<I> & string): void {
+  public triggerIn(name: string): void {
     this.triggersCallOrder.add(name);
     this.scheduleUpdate();
   }
 
-  protected triggerOut(name: keyof ExtractTrigger<O> & string): void {
+  public triggerOut(name: string): void {
     this.forEachLinkedOutPort(name, (op, inName) => {
       op.triggerIn(inName);
     });
   }
 
-  setInValue<K extends keyof ExcludeTrigger<I> & string>(
-    name: K,
-    value: IDataTypes[I[K]],
-  ): void {
+  public setInValue(name: string, value: any): void {
     this.newState[name] = value;
     this.isDirty = true;
     this.scheduleUpdate();
   }
 
   private isDirty: boolean = false;
-  private triggersCallOrder: Set<keyof ExtractTrigger<I> & string> = new Set();
+  private triggersCallOrder: Set<string> = new Set();
   private updateTimer!: number | undefined;
   private scheduleUpdate(): void {
     if (typeof this.updateTimer === 'undefined') {
@@ -224,7 +209,7 @@ export abstract class OpLifeCycle<
   }
 
   // TODO: move it into interface
-  opDidUpdate(prevState: IOState<I>): void {}
+  opDidUpdate(prevState: IOState): void {}
 
   // TODO: move it into interface
   opDidCreate(): void {}
@@ -233,19 +218,13 @@ export abstract class OpLifeCycle<
   opWillBeDestroyed(): void {}
 }
 
-export class OpLogger extends OpLifeCycle<
-  {
-    log: PortDataType.TRIGGER;
-    data: PortDataType.INT; // TODO: maybe use any
-  },
-  never
-> {
+export class OpLogger extends OpLifeCycle {
   name = 'Logger';
 
   constructor(node: OpNodeStore) {
     super(node);
 
-    this.addInPort('data', PortDataType.INT, 0);
+    this.addInPort('data', PortDataType.NUMBER, 0);
   }
 
   opDidUpdate() {
@@ -253,15 +232,7 @@ export class OpLogger extends OpLifeCycle<
   }
 }
 
-export class OpCounter extends OpLifeCycle<
-  {
-    increment: PortDataType.TRIGGER;
-    decrement: PortDataType.TRIGGER;
-  },
-  {
-    count: PortDataType.INT;
-  }
-> {
+export class OpCounter extends OpLifeCycle {
   name = 'Counter';
   count: number = 0;
 
@@ -278,30 +249,6 @@ export class OpCounter extends OpLifeCycle<
       this.sendOutPortValue('count', this.count);
     });
 
-    this.addOutPort('count', PortDataType.INT);
-  }
-}
-
-export class OpBuffer extends OpLifeCycle<
-  | {
-    render: PortDataType.TRIGGER;
-    fragment: PortDataType.STRING;
-    vertex: PortDataType.STRING;
-  }
-  | ShaderInputTypes,
-  {
-    texture: PortDataType.TEXTURE;
-  }
-> {
-  name = 'Buffer';
-
-  constructor(node: OpNodeStore) {
-    super(node);
-
-    this.addInTrigger('render', () => {});
-    this.addInPort('fragment', PortDataType.STRING, '');
-    this.addInPort('vertex', PortDataType.STRING, '');
-
-    this.addOutPort('texture', PortDataType.TEXTURE);
+    this.addOutPort('count', PortDataType.NUMBER, this.count);
   }
 }

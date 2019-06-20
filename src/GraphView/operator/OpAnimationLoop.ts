@@ -3,14 +3,7 @@ import { OpNodeStore } from '../stores/OpNodeStore';
 import { PortDataType } from './constants';
 import { IOState, OpLifeCycle } from './OpLifeCycle';
 
-export class OpAnimationLoop extends OpLifeCycle<
-  {
-    isActive: PortDataType.BOOL;
-  },
-  {
-    tick: PortDataType.TRIGGER;
-  }
-> {
+export class OpAnimationLoop extends OpLifeCycle {
   name = 'AnimationLoop';
   private loop = new AnimationLoop();
 

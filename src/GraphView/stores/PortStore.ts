@@ -1,10 +1,15 @@
-import { observable, action } from 'mobx';
+import { action, observable } from 'mobx';
 import * as uuid from 'uuid/v4';
-
-import { NodeStore } from './NodeStore';
-import { PORT_WIDTH, PORT_STEP, NODE_HEIGHT, PORT_HEIGHT, PortType } from '../constants';
+import {
+  NODE_HEIGHT,
+  PORT_HEIGHT,
+  PORT_STEP,
+  PORT_WIDTH,
+  PortType,
+} from '../constants';
 import { GraphStore } from './GraphStore';
 import { LinkStore } from './LinkStore';
+import { NodeStore } from './NodeStore';
 
 export class PortStore<T extends PortType = PortType> {
   readonly node: NodeStore;
@@ -13,15 +18,21 @@ export class PortStore<T extends PortType = PortType> {
   readonly id: string = uuid();
   @observable label: string = '';
 
-  constructor(node: NodeStore, type: T, dataType: string) {
+  constructor(
+    node: NodeStore,
+    type: T,
+    dataType: string,
+    label: string = name,
+  ) {
     this.node = node;
     this.type = type;
     this.dataType = dataType;
+    this.label = label;
   }
 
   get color(): string {
     return this.graph!.config.colors[this.dataType] || 'white';
-  };
+  }
 
   get graph(): GraphStore | undefined {
     return this.node.graph;
@@ -36,7 +47,9 @@ export class PortStore<T extends PortType = PortType> {
   }
 
   get relY(): number {
-    return this.type === PortType.OUTPUT ? NODE_HEIGHT + PORT_HEIGHT / 2 : -PORT_HEIGHT / 2;
+    return this.type === PortType.OUTPUT
+      ? NODE_HEIGHT + PORT_HEIGHT / 2
+      : -PORT_HEIGHT / 2;
   }
 
   get x(): number {
@@ -86,6 +99,7 @@ export class PortStore<T extends PortType = PortType> {
   @action link(port: PortStore<PortType.INPUT>): void {
     if (this.type === PortType.OUTPUT) {
       this.graph!.addLink(this as PortStore<PortType.OUTPUT>, port);
+      this.node.onLink(this as PortStore<PortType.OUTPUT>, port);
     } else {
       console.error('wrong types');
     }
@@ -104,7 +118,7 @@ export class PortStore<T extends PortType = PortType> {
   }
 
   @action unlinkAll(): void {
-    this.linkedPorts && this.linkedPorts.forEach(port => this.unlink(port));
+    this.linkedPorts && this.linkedPorts.forEach((port) => this.unlink(port));
   }
 
   @action delete(): void {

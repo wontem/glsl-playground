@@ -100,4 +100,9 @@ export abstract class NodeStore {
   @action delete(): void {
     this.deleteAsNode();
   }
+
+  onLink(
+    fromPort: PortStore<PortType.OUTPUT>,
+    toPort: PortStore<PortType.INPUT>,
+  ): void {}
 }

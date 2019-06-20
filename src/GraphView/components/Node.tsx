@@ -1,8 +1,7 @@
 import { observer } from 'mobx-react';
 import * as React from 'react';
 // import { observable } from 'mobx';
-
-import { IconBaseProps } from 'react-icons';
+import { IconBaseProps } from 'react-icons/lib';
 import {
   MdCallMade,
   MdCallReceived,
@@ -100,6 +99,7 @@ export class Node extends React.Component<Props, never> {
     const ports: JSX.Element[] = [];
 
     node.ports.forEach((port, id) => {
+      // TODO: create compare helper
       const isEnabled =
         !(currentItem instanceof PortStore) ||
         port === currentItem ||

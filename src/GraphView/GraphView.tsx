@@ -1,7 +1,4 @@
-import { hot } from 'react-hot-loader/root';
-
 import * as React from 'react';
-
 import { Patch } from '../GraphView/components/Patch';
 import { GraphStore } from '../GraphView/stores/GraphStore';
 import { PortColors } from './operator/constants';
@@ -23,4 +20,4 @@ const GraphView: React.FC = () => (
   </>
 );
 
-export const ObsGraphView = hot(GraphView);
+export const ObsGraphView = GraphView;

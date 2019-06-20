@@ -58,7 +58,7 @@ function getActiveUniforms(
 }
 
 export class UniformState {
-  private uniforms!: Record<string, number[]>;
+  private uniforms: Record<string, number[]> = {};
   private uniformsInfoMap!: Record<string, UniformInfo>;
   private shouldRecalculateLocations: boolean = true;
 

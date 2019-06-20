@@ -2,9 +2,11 @@ import { PortType } from '../constants';
 import { GroupIOStore } from './GroupIOStore';
 import { PortStore } from './PortStore';
 
-export class TempPortStore extends PortStore {
-  node!: GroupIOStore;
+export interface TempPortStore {
+  node: GroupIOStore;
+}
 
+export class TempPortStore extends PortStore {
   get index(): number {
     return this.node.ports.size;
   }
