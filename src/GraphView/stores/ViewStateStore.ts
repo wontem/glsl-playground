@@ -1,5 +1,4 @@
 import { action, computed, observable } from 'mobx';
-
 import {
   CENTER_PADDING,
   MAX_SCALE,

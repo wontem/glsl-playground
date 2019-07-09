@@ -2,6 +2,7 @@ import { observer } from 'mobx-react-lite';
 import * as React from 'react';
 import { Box, Button, Checkbox, Separator } from 'reakit';
 import styled from 'styled-components';
+import { context as EditorContext } from '../../Editor/components/EditorContext';
 import { PortType } from '../constants';
 import { PortDataType } from '../operator/constants';
 import { OpLifeCycle } from '../operator/OpLifeCycle';
@@ -54,20 +55,34 @@ const PortInfo: React.FC<{
   op: OpLifeCycle;
   value: any;
 }> = observer(({ port, name, value, op }) => {
+  const [state, setState] = React.useContext(EditorContext);
+
   let v;
   if (port.dataType === PortDataType.NUMBER) {
     v = (
       <Number
         value={value}
-        onChange={(val) => {
+        onChange={(value) => {
           port.type === PortType.INPUT
-            ? op.setInValue(name, val)
+            ? op.setInValue(name, value)
             : op.sendOutPortValue(name, value);
         }}
       />
     );
   } else if (port.dataType === PortDataType.STRING) {
-    v = <Button>change</Button>;
+    v = (
+      <Button
+        onClick={() => {
+          setState({
+            nodeId: port.node.id,
+            portName: name,
+            isVisible: true,
+          });
+        }}
+      >
+        change
+      </Button>
+    );
   } else if (port.dataType === PortDataType.BOOL) {
     v = (
       <Checkbox
@@ -75,7 +90,7 @@ const PortInfo: React.FC<{
         onChange={() => {
           port.type === PortType.INPUT
             ? op.setInValue(name, !value)
-            : op.sendOutPortValue(name, value);
+            : op.sendOutPortValue(name, !value);
         }}
       />
     );
@@ -90,6 +105,23 @@ const PortInfo: React.FC<{
       >
         Trigger
       </Button>
+    );
+  } else if (port.dataType === PortDataType.SELECT) {
+    v = (
+      <select
+        value={value}
+        onChange={(event) => {
+          op.setInValue(name, event.target.value);
+        }}
+      >
+        {(op.parameters[name] as string[]).map((value) => {
+          return (
+            <option value={value} key={value}>
+              {value}
+            </option>
+          );
+        })}
+      </select>
     );
   } else if (port.dataType === PortDataType.OBJECT) {
     if (value === null) {

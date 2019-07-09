@@ -1,5 +1,5 @@
 export const CENTER_PADDING = 20;
-export const ZOOM_FACTOR = 1.1;
+export const ZOOM_FACTOR = 1.05;
 export const MIN_SCALE = 0.5;
 export const MAX_SCALE = 2;
 

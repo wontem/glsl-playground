@@ -1,7 +1,7 @@
 import * as React from 'react';
-import { styled } from 'reakit';
+import styled from 'styled-components';
 
-const Icon: React.SFC<{
+const Icon: React.FC<{
   isActive?: boolean;
   onClick?: () => void;
   className?: string;
@@ -15,7 +15,7 @@ const Icon: React.SFC<{
 
 export const StyledIcon = styled(Icon)`
   opacity: 0.5;
-  color: ${props => props.isActive && props.color || 'currentColor'};
+  color: ${(props) => (props.isActive && props.color) || 'currentColor'};
   height: 1em;
   font-size: 24px;
   cursor: pointer;

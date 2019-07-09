@@ -1,4 +1,8 @@
-async function downloadBitmap(url: string, signal: AbortSignal, options: ImageBitmapOptions): Promise<ImageBitmap> {
+async function downloadBitmap(
+  url: string,
+  signal: AbortSignal,
+  options: ImageBitmapOptions,
+): Promise<ImageBitmap> {
   const response = await fetch(url, { signal });
 
   const blob = await response.blob();
@@ -14,7 +18,11 @@ class BitmapLoader {
     this.abortControllersMap = new Map();
   }
 
-  async download(id: string, url: string, options: ImageBitmapOptions): Promise<ImageBitmap> {
+  async download(
+    id: string,
+    url: string,
+    options: ImageBitmapOptions,
+  ): Promise<ImageBitmap> {
     this.abort(id);
 
     const controller = new AbortController();
@@ -36,7 +44,7 @@ class BitmapLoader {
       return;
     }
 
-    this.abortControllersMap.get(id).abort();
+    this.abortControllersMap.get(id)!.abort();
   }
 }
 

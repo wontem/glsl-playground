@@ -46,7 +46,9 @@ function generateBlurMipmap(
           direction: i === 0 ? [0, radius] : [radius, 0],
         });
 
-        blurProgram.render(newResolution, fb.getCurrentFramebuffer());
+        gl.bindFramebuffer(gl.FRAMEBUFFER, fb.getCurrentFramebuffer());
+
+        blurProgram.render(newResolution);
         fb.swap();
       }
     }
@@ -162,6 +164,8 @@ export class Texture implements ReadonlyTexture {
   }
 
   private texture: WebGLTexture;
+  private filter: Filter = Filter.NEAREST;
+  private wrap: [Wrap, Wrap] = [Wrap.CLAMP, Wrap.CLAMP];
 
   constructor(
     private gl: WebGL2RenderingContext,
@@ -207,8 +211,8 @@ export class Texture implements ReadonlyTexture {
       | HTMLVideoElement,
     resolution: Resolution = [source.width, source.height],
     flipY: boolean = true,
-    filter: Filter = Filter.NEAREST,
-    wrap: [Wrap, Wrap] = [Wrap.CLAMP, Wrap.CLAMP],
+    filter: Filter = this.filter,
+    wrap: [Wrap, Wrap] = this.wrap,
     level: number = 0,
   ): void {
     const gl = this.gl;
@@ -232,14 +236,16 @@ export class Texture implements ReadonlyTexture {
 
     setWrap(gl, wrap);
     setFilter(gl, filter, this);
+    this.wrap = wrap;
+    this.filter = filter;
   }
 
   public setData(
     source: Uint8Array,
     resolution: Resolution,
     flipY: boolean = false,
-    filter: Filter = Filter.NEAREST,
-    wrap: [Wrap, Wrap] = [Wrap.CLAMP, Wrap.CLAMP],
+    filter: Filter = this.filter,
+    wrap: [Wrap, Wrap] = this.wrap,
     level: number = 0,
   ) {
     const gl = this.gl;
@@ -264,6 +270,8 @@ export class Texture implements ReadonlyTexture {
 
     setWrap(gl, wrap);
     setFilter(gl, filter, this);
+    this.wrap = wrap;
+    this.filter = filter;
   }
 
   public setSubImage(source: Uint8Array, resolution: Resolution) {
@@ -291,6 +299,7 @@ export class Texture implements ReadonlyTexture {
     this.activate();
 
     setFilter(gl, filter, this);
+    this.filter = filter;
   }
 
   public setWrap(wrap: [Wrap, Wrap]): void {
@@ -299,6 +308,7 @@ export class Texture implements ReadonlyTexture {
     this.activate();
 
     setWrap(gl, wrap);
+    this.wrap = wrap;
   }
 
   public destroy() {

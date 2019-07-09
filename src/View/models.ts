@@ -23,16 +23,16 @@ export interface Attribute {
 }
 
 export enum Filter {
-  LINEAR,
-  NEAREST,
-  MIPMAP,
-  BLUR,
+  LINEAR = 'linear',
+  NEAREST = 'nearest',
+  MIPMAP = 'mipmap',
+  BLUR = 'blur',
 }
 
 export enum Wrap {
-  CLAMP,
-  REPEAT,
-  MIRROR,
+  CLAMP = 'clamp',
+  REPEAT = 'repeat',
+  MIRROR = 'mirror',
 }
 
 export interface TextureState {

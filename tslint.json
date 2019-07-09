@@ -9,6 +9,7 @@
     "no-boolean-literal-compare": false,
     "ter-arrow-parens": "always",
     "ordered-imports": true,
+    "align": false,
     "no-unused-variable": true
   },
   "rulesDirectory": []

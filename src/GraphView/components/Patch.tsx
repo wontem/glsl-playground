@@ -5,11 +5,7 @@ import { GLContext } from '../../GLContext';
 import { NodeType, PortType, Tool } from '../constants';
 import { fork } from '../helpers/fork';
 import { PrioritizedArray } from '../helpers/PrioritizedArray';
-import { OpAnimationLoop } from '../operator/OpAnimationLoop';
-import { OpGLProgram } from '../operator/OpGLProgram';
-import { OpGLRenderToMain } from '../operator/OpGLRenderMain';
-import { OpGLRenderToTexture } from '../operator/OpGLRenderToTexture';
-import { OpCounter, OpLogger } from '../operator/OpLifeCycle';
+import { OperatorsMap } from '../ops';
 import { GroupStore } from '../stores/GroupStore';
 import { OpNodeStore } from '../stores/OpNodeStore';
 import { PortStore } from '../stores/PortStore';
@@ -19,15 +15,7 @@ import { Link } from './Link';
 import { LinkRaw } from './LinkRaw';
 import { Node } from './Node';
 
-let kek = 0; // FIXME: remove
-const OP_CONSTRUCTORS = [
-  OpGLProgram,
-  OpGLRenderToMain,
-  OpAnimationLoop,
-  OpCounter,
-  OpLogger,
-  OpGLRenderToTexture,
-];
+let k = -1;
 
 interface Props {
   viewState: ViewStateStore; // TODO: maybe move to Patch as property
@@ -37,6 +25,7 @@ interface Props {
 export class Patch extends React.Component<Props> {
   static contextType = GLContext;
   private svgElement: React.RefObject<SVGSVGElement> = React.createRef();
+  private containerRef: React.RefObject<HTMLElement> = React.createRef();
 
   mouseCoordinate(e: React.MouseEvent): [number, number] {
     const rect = this.svgElement.current!.getBoundingClientRect();
@@ -59,7 +48,8 @@ export class Patch extends React.Component<Props> {
         }
       },
       default: () => {
-        const OpConstructor = OP_CONSTRUCTORS[kek++ % OP_CONSTRUCTORS.length];
+        k += 1;
+        const OpConstructor = [...OperatorsMap.values()][k % OperatorsMap.size];
         const node = new OpNodeStore();
         const op = new OpConstructor(node, this.context[0]);
 
@@ -134,6 +124,23 @@ export class Patch extends React.Component<Props> {
     }
   }
 
+  @action
+  onResize = () => {
+    const parent = this.containerRef.current!.parentElement!;
+
+    this.props.viewState.height = parent.offsetHeight;
+    this.props.viewState.width = parent.offsetWidth;
+  }
+
+  componentDidMount() {
+    this.onResize();
+    window.addEventListener('resize', this.onResize);
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('resize', this.onResize);
+  }
+
   render() {
     const nodes: PrioritizedArray<JSX.Element, number> = new PrioritizedArray();
     const links: PrioritizedArray<JSX.Element, number> = new PrioritizedArray();
@@ -186,6 +193,7 @@ export class Patch extends React.Component<Props> {
 
     return (
       <HotKeys
+        innerRef={this.containerRef}
         keyMap={{
           center: 'c',
           delete: ['del', 'backspace'],
@@ -222,6 +230,8 @@ export class Patch extends React.Component<Props> {
         }}
         style={{
           outline: 'none',
+          width: this.props.viewState.width,
+          height: this.props.viewState.height,
         }}
       >
         <svg

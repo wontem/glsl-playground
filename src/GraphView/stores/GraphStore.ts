@@ -1,5 +1,4 @@
 import { action, computed, observable } from 'mobx';
-
 import { NODE_HEIGHT, PortType } from '../constants';
 import { GroupStore } from './GroupStore';
 import { LinkStore } from './LinkStore';
@@ -79,6 +78,11 @@ export class GraphStore {
 
     node.graph!.nodes.delete(node.id);
     node.graph = undefined;
+  }
+
+  @action clear() {
+    this.links.forEach((link) => link.delete());
+    this.nodes.forEach((node) => node.delete());
   }
 
   @action addLink(

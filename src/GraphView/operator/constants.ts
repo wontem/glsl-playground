@@ -6,6 +6,7 @@ export enum PortDataType {
   NUMBER = 'number',
   BOOL = 'bool',
   STRING = 'string',
+  SELECT = 'select',
 }
 
 export const PortColors: Record<PortDataType, string> = {
@@ -16,6 +17,7 @@ export const PortColors: Record<PortDataType, string> = {
   [PortDataType.BOOL]: '#4DB6AC',
   [PortDataType.NUMBER]: '#4DB6AC',
   [PortDataType.STRING]: '#4DB6AC',
+  [PortDataType.SELECT]: '#8BC34A',
 };
 
 export interface IDataTypes {
@@ -26,4 +28,5 @@ export interface IDataTypes {
   [PortDataType.OBJECT]: {} | null;
   [PortDataType.NUMBER]: number;
   [PortDataType.STRING]: string;
+  [PortDataType.SELECT]: string;
 }

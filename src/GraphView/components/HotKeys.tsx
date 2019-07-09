@@ -1,5 +1,5 @@
-import * as React from "react";
-import { withHotKeys, HotKeysProps } from "react-hotkeys";
+import * as React from 'react';
+import { HotKeysProps, withHotKeys } from 'react-hotkeys';
 
 type HotKeysWrapperProps = {
   hotKeys?: object;
@@ -8,14 +8,21 @@ type HotKeysWrapperProps = {
 
 class HotKeysWrapper extends React.Component<HotKeysWrapperProps> {
   render() {
-    const { children, hotKeys, style } = this.props;
+    const { children, hotKeys, style, innerRef } = this.props;
 
     return (
-      <div {...hotKeys} style={style}>
+      <div
+        {...hotKeys}
+        ref={innerRef as React.RefObject<HTMLDivElement>}
+        style={style}
+      >
         {children}
       </div>
     );
   }
 }
 
-export const HotKeys: React.ComponentClass<HotKeysWrapperProps> = withHotKeys(HotKeysWrapper, {}) as any;
+export const HotKeys: React.ComponentClass<HotKeysWrapperProps> = withHotKeys(
+  HotKeysWrapper,
+  {},
+) as any;

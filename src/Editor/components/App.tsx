@@ -3,12 +3,16 @@ import { Box, Provider } from 'reakit';
 import * as system from 'reakit-system-bootstrap';
 import 'reset-css';
 import styled, { createGlobalStyle } from 'styled-components';
-import { GLView } from '../../GLContext';
 import { Patch } from '../../GraphView/components/Patch';
 import { PortColors } from '../../GraphView/operator/constants';
 import { Panel } from '../../GraphView/panelComponents/Panel';
 import { GraphStore } from '../../GraphView/stores/GraphStore';
 import { ViewStateStore } from '../../GraphView/stores/ViewStateStore';
+import {
+  EditorContainer,
+  Provider as EditorStateProvider,
+} from './EditorContext';
+import { Toolbar } from './Toolbar';
 
 const GlobalStyle = createGlobalStyle`
   html, body, #root {
@@ -60,20 +64,19 @@ export class App extends React.Component {
   render() {
     return (
       <Provider unstable_system={system}>
-        <GlobalStyle />
-        <Block>
-          <LeftColumn>
-            <Patch viewState={viewState} />
-            {/* <Editor /> */}
-          </LeftColumn>
-          <RightColumn>
-            <GLView />
-            <Panel viewState={viewState} />
-
-            {/* <View /> */}
-            {/* <TabsPanel /> */}
-          </RightColumn>
-        </Block>
+        <EditorStateProvider>
+          <GlobalStyle />
+          <Block>
+            <LeftColumn>
+              <Patch viewState={viewState} />
+              <EditorContainer viewState={viewState} />
+            </LeftColumn>
+            <RightColumn>
+              <Toolbar viewState={viewState} />
+              <Panel viewState={viewState} />
+            </RightColumn>
+          </Block>
+        </EditorStateProvider>
       </Provider>
     );
   }

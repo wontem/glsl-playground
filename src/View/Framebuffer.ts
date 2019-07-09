@@ -1,4 +1,4 @@
-import { ReadonlyTexture, Resolution } from './models';
+import { Filter, ReadonlyTexture, Resolution, Wrap } from './models';
 import { Texture } from './Texture';
 
 class Framebuffer {
@@ -84,6 +84,7 @@ class Framebuffer {
 export class PingPongFramebuffer implements ReadonlyTexture {
   private currentFB: Framebuffer;
   private alternativeFB: Framebuffer;
+  private textures: Texture[] = [];
 
   constructor(
     private gl: WebGL2RenderingContext,
@@ -92,6 +93,7 @@ export class PingPongFramebuffer implements ReadonlyTexture {
   ) {
     const texture0 = new Texture(gl, resolution, this.unit);
     const texture1 = new Texture(gl, resolution, this.unit);
+    this.textures = [texture0, texture1];
 
     this.currentFB = new Framebuffer(gl, texture0, texture1);
     this.alternativeFB = new Framebuffer(gl, texture1, texture0);
@@ -126,6 +128,14 @@ export class PingPongFramebuffer implements ReadonlyTexture {
     return this.resolution;
   }
 
+  public setFilter(filter: Filter): void {
+    this.textures.forEach((texture) => texture.setFilter(filter));
+  }
+
+  public setWrap(wrap: [Wrap, Wrap]): void {
+    this.textures.forEach((texture) => texture.setWrap(wrap));
+  }
+
   public resize(resolution: Resolution): void {
     this.currentFB.resize(resolution);
     this.alternativeFB.resize(resolution);
@@ -136,5 +146,6 @@ export class PingPongFramebuffer implements ReadonlyTexture {
     this.currentFB.destroy();
     this.alternativeFB.destroy();
     this.unit = -1;
+    this.textures = [];
   }
 }

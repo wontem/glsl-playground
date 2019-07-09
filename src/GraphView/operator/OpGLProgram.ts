@@ -1,4 +1,7 @@
+import { observable } from 'mobx';
+import { GLState } from '../../GLContext';
 import * as defaultShaders from '../../View/defaultShaders';
+import { ViewEvent } from '../../View/models';
 import { Program } from '../../View/Program';
 import { OpNodeStore } from '../stores/OpNodeStore';
 import { PortDataType } from './constants';
@@ -9,12 +12,13 @@ export class OpGLProgram extends OpLifeCycle {
   private program: Program;
   private gl: WebGL2RenderingContext;
   private uniformsMap: Map<string, WebGLActiveInfo> = new Map();
+  @observable errors: ViewEvent[] = [];
 
-  constructor(node: OpNodeStore, context: WebGL2RenderingContext) {
+  constructor(node: OpNodeStore, context: GLState) {
     super(node);
 
-    this.program = new Program(context);
-    this.gl = context;
+    this.gl = context.gl;
+    this.program = new Program(this.gl);
 
     this.addInPort(
       'vert',
@@ -24,17 +28,7 @@ export class OpGLProgram extends OpLifeCycle {
     this.addInPort(
       'frag',
       PortDataType.STRING,
-      `#version 300 es
-precision mediump float;
-
-uniform float t;
-
-out vec4 frag_color;
-
-void main() {
-  frag_color = vec4(1., abs(sin(t / 100.)), 0., 1.);
-}
-`,
+      defaultShaders.getFragmentShaderSource(),
     );
 
     this.addOutTrigger('next');
@@ -42,7 +36,11 @@ void main() {
   }
 
   private updateShader() {
-    this.program.update(this.state.frag);
+    this.errors = this.program.update(this.state.frag);
+
+    if (this.errors.length > 0) {
+      return;
+    }
 
     const uniformsInfo = this.program.getUniformsInfo();
 
@@ -57,6 +55,10 @@ void main() {
       this.uniformsMap.set(name, info);
 
       switch (type) {
+        case this.gl.SAMPLER_2D: {
+          this.addInPort(name, PortDataType.OBJECT, null, name);
+          break;
+        }
         case this.gl.FLOAT:
         case this.gl.INT: {
           this.addInPort(name, PortDataType.NUMBER, 0, name);
@@ -67,9 +69,7 @@ void main() {
           break;
         }
         default: {
-          if (size > 1) {
-            this.addInPort(name, PortDataType.ARRAY, [], name);
-          }
+          this.addInPort(name, PortDataType.ARRAY, [], name);
         }
       }
     });
@@ -77,17 +77,21 @@ void main() {
 
   opDidCreate() {
     this.updateShader();
-    this.sendOutPortValue('program', this.program);
+    this.updateUniforms();
+    this.triggerOut('next');
   }
 
-  opDidUpdate(prevState: any) {
-    if (prevState.frag !== this.state.frag) {
-      this.updateShader();
-    }
+  updateUniforms() {
     // TODO: optimize and move into OpGLFramebuffer
     const uniforms: Record<string, number[]> = {};
 
     this.uniformsMap.forEach((info, name) => {
+      if (info.type === this.gl.SAMPLER_2D) {
+        uniforms[name] = [this.state[name] && this.state[name].getUnit()];
+
+        return;
+      }
+
       uniforms[name] = [this.state[name]];
     });
 
@@ -95,6 +99,14 @@ void main() {
 
     // TODO: send actual output port value to linked inputs on linking stage
     this.sendOutPortValue('program', this.program);
+  }
+
+  opDidUpdate(prevState: any) {
+    if (prevState.frag !== this.state.frag) {
+      this.updateShader();
+    }
+
+    this.updateUniforms();
     this.triggerOut('next');
   }
 

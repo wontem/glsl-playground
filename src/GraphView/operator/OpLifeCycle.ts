@@ -1,5 +1,5 @@
 import { setImmediate } from 'core-js/web/immediate';
-import { observable } from 'mobx';
+import { action, observable } from 'mobx';
 import { PortType } from '../constants';
 import { OpNodeStore } from '../stores/OpNodeStore';
 import { PortalPortStore } from '../stores/PortalPortStore';
@@ -18,6 +18,7 @@ export abstract class OpLifeCycle {
   private newState: Partial<IOState> = {};
   @observable public state: IOState = {};
   @observable public outputState: IOState = {};
+  @observable public parameters: IOState = {};
 
   get name(): string {
     return this.node.label;
@@ -63,11 +64,16 @@ export abstract class OpLifeCycle {
     return this.portIds[type][name];
   }
 
+  public getNameByPort(port: PortStore): string | undefined {
+    return this.portNames.get(port);
+  }
+
   constructor(private readonly node: OpNodeStore) {
     node.op = this;
     this.scheduleUpdate();
   }
 
+  @action
   private addPort(
     type: PortType,
     dataType: PortDataType,
@@ -81,6 +87,22 @@ export abstract class OpLifeCycle {
     this.portNames.set(port, name);
   }
 
+  @action
+  protected addSelectPort(
+    name: string,
+    options: string[],
+    defaultValue: string,
+    label?: string,
+  ) {
+    this.parameters[name] = options;
+    this.addPort(PortType.INPUT, PortDataType.SELECT, name, label);
+    this.defaultState[name] = defaultValue;
+    if (!this.state.hasOwnProperty(name)) {
+      this.state[name] = defaultValue;
+    }
+  }
+
+  @action
   protected addInPort<T extends PortDataType>(
     name: string,
     type: T,
@@ -89,9 +111,12 @@ export abstract class OpLifeCycle {
   ): void {
     this.addPort(PortType.INPUT, type, name, label);
     this.defaultState[name] = defaultValue;
-    this.state[name] = defaultValue;
+    if (!this.state.hasOwnProperty(name)) {
+      this.state[name] = defaultValue;
+    }
   }
 
+  @action
   protected addOutPort<T extends PortDataType>(
     name: string,
     type: T,
@@ -99,9 +124,12 @@ export abstract class OpLifeCycle {
     label?: string,
   ): void {
     this.addPort(PortType.OUTPUT, type, name, label);
-    this.outputState[name] = initialValue;
+    if (!this.outputState.hasOwnProperty(name)) {
+      this.outputState[name] = initialValue;
+    }
   }
 
+  @action
   protected addInTrigger(
     name: string,
     onTrigger: Trigger,
@@ -111,6 +139,7 @@ export abstract class OpLifeCycle {
     this.state[name] = onTrigger;
   }
 
+  @action
   protected addOutTrigger(name: string, label?: string): void {
     this.addPort(PortType.OUTPUT, PortDataType.TRIGGER, name, label);
   }
@@ -146,11 +175,26 @@ export abstract class OpLifeCycle {
     });
   }
 
+  @action
   public sendOutPortValue(name: string, value: any): void {
     this.outputState[name] = value;
 
     this.forEachLinkedOutPort(name, (op, inName) => {
       op.setInValue(inName, value);
+    });
+  }
+
+  @action
+  public updateInputState(newState: Partial<IOState>) {
+    this.newState = { ...this.newState, ...newState };
+    this.isDirty = true;
+    this.scheduleUpdate();
+  }
+
+  @action
+  public updateOutputState(newState: Partial<IOState>) {
+    Object.keys(newState).forEach((key) => {
+      this.sendOutPortValue(key, newState[key]);
     });
   }
 
@@ -165,6 +209,7 @@ export abstract class OpLifeCycle {
     });
   }
 
+  @action
   public setInValue(name: string, value: any): void {
     this.newState[name] = value;
     this.isDirty = true;
@@ -180,7 +225,8 @@ export abstract class OpLifeCycle {
     }
   }
 
-  private performUpdate = () => {
+  @action
+  private performUpdate = action(() => {
     if (this.isDirty || !this.initialized) {
       const prevState = this.state;
       this.state = { ...prevState, ...this.newState };
@@ -202,7 +248,7 @@ export abstract class OpLifeCycle {
     this.updateTimer = undefined;
     this.triggersCallOrder.clear();
     this.isDirty = false;
-  }
+  });
 
   destroy(): void {
     this.opWillBeDestroyed && this.opWillBeDestroyed();
@@ -238,6 +284,11 @@ export class OpCounter extends OpLifeCycle {
 
   constructor(node: OpNodeStore) {
     super(node);
+
+    this.addInTrigger('reset', () => {
+      this.count = 0;
+      this.sendOutPortValue('count', this.count);
+    });
 
     this.addInTrigger('increment', () => {
       this.count += 1;
