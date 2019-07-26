@@ -1,20 +1,18 @@
-
 import { EventEmitter } from 'events';
 
 export class AnimationLoop extends EventEmitter {
-  private fps: number;
-  private fpsBeginTime: number;
-  private fpsPrevTime: number;
-  private fpsFramesElapsed: number;
+  private fpsFramesElapsed: number = 0;
+  private fps: number = 0;
+  private fpsBeginTime?: number;
+  private fpsPrevTime?: number;
 
   private isPlaying: boolean;
-  private frameId: number;
+  private frameId?: number;
 
   constructor() {
     super();
 
     this.isPlaying = false;
-    this.frameId = null;
 
     this.fpsReset();
   }
@@ -27,8 +25,8 @@ export class AnimationLoop extends EventEmitter {
     const time = performance.now();
     this.fpsFramesElapsed += 1;
 
-    if (time >= this.fpsPrevTime + 1000) {
-      this.fps = (this.fpsFramesElapsed * 1000) / (time - this.fpsPrevTime);
+    if (time >= this.fpsPrevTime! + 1000) {
+      this.fps = (this.fpsFramesElapsed * 1000) / (time - this.fpsPrevTime!);
 
       this.fpsPrevTime = time;
       this.fpsFramesElapsed = 0;
@@ -64,9 +62,9 @@ export class AnimationLoop extends EventEmitter {
       if (isPlaying) {
         this.loop();
       } else {
-        cancelAnimationFrame(this.frameId);
+        cancelAnimationFrame(this.frameId!);
         this.fpsReset();
-        this.frameId = null;
+        this.frameId = undefined;
       }
     }
   }

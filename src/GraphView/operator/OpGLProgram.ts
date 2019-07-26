@@ -31,7 +31,7 @@ export class OpGLProgram extends OpLifeCycle {
       defaultShaders.getFragmentShaderSource(),
     );
 
-    this.addOutTrigger('next');
+    this.addOutTrigger('programChanged');
     this.addOutPort('program', PortDataType.OBJECT, this.program);
   }
 
@@ -78,7 +78,7 @@ export class OpGLProgram extends OpLifeCycle {
   opDidCreate() {
     this.updateShader();
     this.updateUniforms();
-    this.triggerOut('next');
+    this.triggerOut('programChanged');
   }
 
   updateUniforms() {
@@ -104,10 +104,10 @@ export class OpGLProgram extends OpLifeCycle {
   opDidUpdate(prevState: any) {
     if (prevState.frag !== this.state.frag) {
       this.updateShader();
+      this.triggerOut('programChanged');
     }
 
     this.updateUniforms();
-    this.triggerOut('next');
   }
 
   opWillBeDestroyed() {

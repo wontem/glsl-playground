@@ -1,7 +1,4 @@
-import { getGaussianBlurFragmentShaderSource } from './defaultShaders';
-import { PingPongFramebuffer } from './Framebuffer';
 import { Filter, ReadonlyTexture, Resolution, Wrap } from './models';
-import { Program } from './Program';
 
 function getAppropriateWrap(gl: WebGL2RenderingContext, wrap: Wrap): number {
   switch (wrap) {
@@ -15,63 +12,63 @@ function getAppropriateWrap(gl: WebGL2RenderingContext, wrap: Wrap): number {
   }
 }
 
-function generateBlurMipmap(
-  gl: WebGL2RenderingContext,
-  texture: Texture,
-  radius: number,
-  iterations: number,
-) {
-  setFilter(gl, Filter.LINEAR, texture);
+// function generateBlurMipmap(
+//   gl: WebGL2RenderingContext,
+//   texture: Texture,
+//   radius: number,
+//   iterations: number,
+// ) {
+//   setFilter(gl, Filter.LINEAR, texture);
 
-  const initialResolution = texture.getResolution();
-  const blurProgram = new Program(gl);
-  const fb = new PingPongFramebuffer(gl, initialResolution);
+//   const initialResolution = texture.getResolution();
+//   const blurProgram = new Program(gl);
+//   const fb = new PingPongFramebuffer(gl, initialResolution);
 
-  blurProgram.update(getGaussianBlurFragmentShaderSource());
+//   blurProgram.update(getGaussianBlurFragmentShaderSource());
 
-  const levelsNumber = Math.floor(Math.log2(Math.max(...initialResolution)));
+//   const levelsNumber = Math.floor(Math.log2(Math.max(...initialResolution)));
 
-  for (let level = 1; level <= levelsNumber; level += 1) {
-    const newResolution = initialResolution.map(
-      (size) => Math.floor(size / 2 ** level) || 1,
-    ) as Resolution;
+//   for (let level = 1; level <= levelsNumber; level += 1) {
+//     const newResolution = initialResolution.map(
+//       (size) => Math.floor(size / 2 ** level) || 1,
+//     ) as Resolution;
 
-    fb.resize(newResolution);
+//     fb.resize(newResolution);
 
-    for (let iteration = 0; iteration < iterations; iteration += 1) {
-      for (let i = 0; i < 2; i += 1) {
-        blurProgram.setUniforms({
-          image: [iteration === 0 ? texture.getUnit() : fb.getUnit()],
-          resolution: newResolution,
-          direction: i === 0 ? [0, radius] : [radius, 0],
-        });
+//     for (let iteration = 0; iteration < iterations; iteration += 1) {
+//       for (let i = 0; i < 2; i += 1) {
+//         blurProgram.setUniforms({
+//           image: [iteration === 0 ? texture.getUnit() : fb.getUnit()],
+//           resolution: newResolution,
+//           direction: i === 0 ? [0, radius] : [radius, 0],
+//         });
 
-        gl.bindFramebuffer(gl.FRAMEBUFFER, fb.getCurrentFramebuffer());
+//         gl.bindFramebuffer(gl.FRAMEBUFFER, fb.getCurrentFramebuffer());
 
-        blurProgram.render(newResolution);
-        fb.swap();
-      }
-    }
+//         blurProgram.render(newResolution);
+//         fb.swap();
+//       }
+//     }
 
-    const pixelsData = fb.getPixelsData();
+//     const pixelsData = fb.getPixelsData();
 
-    texture.activate();
-    gl.texImage2D(
-      gl.TEXTURE_2D,
-      level,
-      gl.RGBA,
-      pixelsData.resolution[0],
-      pixelsData.resolution[1],
-      0,
-      gl.RGBA,
-      gl.UNSIGNED_BYTE,
-      pixelsData.pixels,
-    );
-  }
+//     texture.activate();
+//     gl.texImage2D(
+//       gl.TEXTURE_2D,
+//       level,
+//       gl.RGBA,
+//       pixelsData.resolution[0],
+//       pixelsData.resolution[1],
+//       0,
+//       gl.RGBA,
+//       gl.UNSIGNED_BYTE,
+//       pixelsData.pixels,
+//     );
+//   }
 
-  blurProgram.destroy();
-  fb.destroy();
-}
+//   blurProgram.destroy();
+//   fb.destroy();
+// }
 
 function getAppropriateFilters(
   gl: WebGL2RenderingContext,
@@ -97,7 +94,8 @@ function setFilter(
   const filters = getAppropriateFilters(gl, filter);
 
   if (filter === Filter.BLUR) {
-    generateBlurMipmap(gl, texture, 1, 3);
+    // generateBlurMipmap(gl, texture, 1, 3);
+    gl.generateMipmap(gl.TEXTURE_2D);
   } else if (filters[1] === gl.LINEAR_MIPMAP_LINEAR) {
     gl.generateMipmap(gl.TEXTURE_2D);
   }
@@ -117,6 +115,11 @@ function setWrap(gl: WebGL2RenderingContext, wrap: [Wrap, Wrap]) {
     gl.TEXTURE_WRAP_T,
     getAppropriateWrap(gl, wrap[1]),
   );
+}
+
+export enum TextureType {
+  UNSIGNED_BYTE = 0,
+  FLOAT = 1,
 }
 
 export class Texture implements ReadonlyTexture {
@@ -171,12 +174,33 @@ export class Texture implements ReadonlyTexture {
     private gl: WebGL2RenderingContext,
     private resolution: Resolution = [1, 1],
     private unit: number = Texture.getNewUnit(gl),
+    private type: TextureType = TextureType.UNSIGNED_BYTE,
   ) {
     Texture.lockUnit(this.gl, this.unit);
     this.texture = gl.createTexture()!;
 
-    this.activate();
-    this.setData(new Uint8Array(resolution[0] * resolution[1] * 4), resolution);
+    this.setData(
+      new this.DataConstructor(resolution[0] * resolution[1] * 4),
+      resolution,
+    );
+  }
+
+  private get DataConstructor():
+    | Uint8ArrayConstructor
+    | Float32ArrayConstructor {
+      return this.type === TextureType.UNSIGNED_BYTE ? Uint8Array : Float32Array;
+    }
+
+  private get internalFormat(): number {
+    return this.type === TextureType.UNSIGNED_BYTE
+      ? this.gl.RGBA
+      : this.gl.RGBA32F;
+  }
+
+  private get dataType(): number {
+    return this.type === TextureType.UNSIGNED_BYTE
+      ? this.gl.UNSIGNED_BYTE
+      : this.gl.FLOAT;
   }
 
   public activate(): void {
@@ -241,7 +265,7 @@ export class Texture implements ReadonlyTexture {
   }
 
   public setData(
-    source: Uint8Array,
+    source: Uint8Array | Float32Array,
     resolution: Resolution,
     flipY: boolean = false,
     filter: Filter = this.filter,
@@ -256,12 +280,12 @@ export class Texture implements ReadonlyTexture {
     gl.texImage2D(
       gl.TEXTURE_2D,
       level,
-      gl.RGBA,
+      this.internalFormat,
       resolution[0],
       resolution[1],
       0,
       gl.RGBA,
-      gl.UNSIGNED_BYTE,
+      this.dataType,
       source,
       0,
     );
@@ -274,7 +298,10 @@ export class Texture implements ReadonlyTexture {
     this.filter = filter;
   }
 
-  public setSubImage(source: Uint8Array, resolution: Resolution) {
+  public setSubImage(
+    source: Uint8Array | Float32Array,
+    resolution: Resolution,
+  ) {
     const gl = this.gl;
 
     this.activate();
@@ -287,7 +314,7 @@ export class Texture implements ReadonlyTexture {
       resolution[0],
       resolution[1],
       gl.RGBA,
-      gl.UNSIGNED_BYTE,
+      this.dataType,
       source,
       0,
     );

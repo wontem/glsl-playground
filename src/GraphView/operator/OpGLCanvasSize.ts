@@ -14,10 +14,12 @@ export class OpGLCanvasSize extends OpLifeCycle {
 
     this.addOutPort('width', PortDataType.NUMBER, this.glState.width);
     this.addOutPort('height', PortDataType.NUMBER, this.glState.height);
+    this.addOutTrigger('change');
 
     this.glState.on('resize', ([width, height]) => {
       this.sendOutPortValue('width', width);
       this.sendOutPortValue('height', height);
+      this.triggerOut('change');
     });
   }
 

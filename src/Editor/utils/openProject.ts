@@ -17,6 +17,7 @@ const PORT_TYPES_TO_SAVE: Set<string> = new Set([
   PortDataType.BOOL,
   PortDataType.NUMBER,
   PortDataType.STRING,
+  PortDataType.SELECT,
 ]);
 
 interface SerializedOp {
@@ -138,7 +139,9 @@ export const useProjectData = action(
           )! as OpNodeStore).op.getPortByName(PortType.INPUT, link.out[1]);
 
           if (!fromPort || !toPort) {
+            console.error(`Cannot find port for link [${link.out.join()}]`);
             debugger;
+            return;
           }
 
           fromPort.link(toPort);

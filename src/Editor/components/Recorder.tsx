@@ -13,10 +13,13 @@ export const Recorder: React.FC<{ projectName: string }> = ({
 
   React.useEffect(() => {
     if (gl && gl.canvas) {
-      const recorder = new MediaRecorder((gl.canvas as any).captureStream());
+      const recorder = new MediaRecorder((gl.canvas as any).captureStream(), {
+        mimeType: 'video/webm;codecs=vp9',
+        // videoBitsPerSecond: 2500000 * 8,
+      });
       setRecorder(recorder);
     }
-  },              [gl]);
+  }, [gl]);
 
   React.useEffect(() => {
     if (recorder) {
@@ -24,7 +27,7 @@ export const Recorder: React.FC<{ projectName: string }> = ({
         saveFile(event.data, `${projectName}_${Date.now()}.webm`);
       };
     }
-  },              [recorder, projectName]);
+  }, [recorder, projectName]);
 
   return (
     <StyledIcon

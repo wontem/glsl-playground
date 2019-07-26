@@ -1,5 +1,5 @@
 import { Filter, ReadonlyTexture, Resolution, Wrap } from './models';
-import { Texture } from './Texture';
+import { Texture, TextureType } from './Texture';
 
 class Framebuffer {
   private fbo: WebGLFramebuffer;
@@ -60,13 +60,13 @@ class Framebuffer {
   }
 
   public resize(resolution: Resolution): void {
-    const pixelsData = this.getPixelsData(resolution);
+    // const pixelsData = this.getPixelsData(resolution);
 
     this.textureInput.setData(
-      new Uint8Array(resolution[0] * resolution[1] * 4),
+      new Float32Array(resolution[0] * resolution[1] * 4),
       resolution,
     );
-    this.textureInput.setSubImage(pixelsData.pixels, pixelsData.resolution);
+    // this.textureInput.setSubImage(pixelsData.pixels, pixelsData.resolution); // TODO: need to convert uint into float
   }
 
   public destroy(): void {
@@ -91,8 +91,8 @@ export class PingPongFramebuffer implements ReadonlyTexture {
     private resolution: Resolution = [1, 1],
     private unit: number = Texture.getNewUnit(gl),
   ) {
-    const texture0 = new Texture(gl, resolution, this.unit);
-    const texture1 = new Texture(gl, resolution, this.unit);
+    const texture0 = new Texture(gl, resolution, this.unit, TextureType.FLOAT);
+    const texture1 = new Texture(gl, resolution, this.unit, TextureType.FLOAT);
     this.textures = [texture0, texture1];
 
     this.currentFB = new Framebuffer(gl, texture0, texture1);

@@ -4,9 +4,10 @@ import {
   MdEdit,
   MdFolderOpen,
   MdFullscreen,
-  MdHighQuality,
   MdImage,
   MdSave,
+  MdUnfoldLess,
+  MdUnfoldMore,
 } from 'react-icons/md';
 import styled from 'styled-components';
 import { GLContext, GLView } from '../../GLContext';
@@ -18,6 +19,7 @@ import {
 } from '../utils/openProject';
 import { saveFile, saveImage } from '../utils/saveFile';
 import { context as EditorContext } from './EditorContext';
+import { FPS } from './FPS';
 import { StyledIcon } from './Icon';
 import { Recorder } from './Recorder';
 
@@ -91,7 +93,6 @@ interface Props {
 }
 
 interface State {
-  isHD: boolean;
   mouseStart: number[];
   mouseEnd: number[];
   mouse: number[];
@@ -117,12 +118,11 @@ export class Toolbar extends React.Component<Props, State> {
       mouseStart: [0, 0],
       mouseEnd: [0, 0],
       mouse: [0, 0],
-      isHD: false,
       name: '',
-      width: 1200,
-      height: 1200,
-      currentWidth: 1200,
-      currentHeight: 1200,
+      width: 2048,
+      height: 2048,
+      currentWidth: 2048,
+      currentHeight: 2048,
     };
   }
 
@@ -157,8 +157,6 @@ export class Toolbar extends React.Component<Props, State> {
   }
 
   render() {
-    const pixelRatio = this.state.isHD ? 2 : 1;
-
     return (
       <React.Fragment>
         <Panel>
@@ -245,8 +243,8 @@ export class Toolbar extends React.Component<Props, State> {
         </Panel>
         <CanvasWrapper>
           <GLSLViewStyled
-            width={this.state.currentWidth * pixelRatio}
-            height={this.state.currentHeight * pixelRatio}
+            width={this.state.currentWidth}
+            height={this.state.currentHeight}
           />
         </CanvasWrapper>
         <Panel>
@@ -274,6 +272,38 @@ export class Toolbar extends React.Component<Props, State> {
           />
           <StyledIcon
             onClick={() => {
+              const dimensions = {
+                width: this.state.currentWidth * 2,
+                height: this.state.currentHeight * 2,
+              };
+
+              this.setState({
+                currentWidth: dimensions.width,
+                currentHeight: dimensions.height,
+                ...dimensions,
+              });
+            }}
+          >
+            <MdUnfoldMore />
+          </StyledIcon>
+          <StyledIcon
+            onClick={() => {
+              const dimensions = {
+                width: Math.floor(this.state.width / 2),
+                height: Math.floor(this.state.height / 2),
+              };
+
+              this.setState({
+                currentWidth: dimensions.width,
+                currentHeight: dimensions.height,
+                ...dimensions,
+              });
+            }}
+          >
+            <MdUnfoldLess />
+          </StyledIcon>
+          <StyledIcon
+            onClick={() => {
               this.setState({
                 currentWidth: this.state.width,
                 currentHeight: this.state.height,
@@ -285,17 +315,6 @@ export class Toolbar extends React.Component<Props, State> {
         </Panel>
         <Panel>
           <Recorder projectName={this.state.name} />
-          <StyledIcon
-            color="#00a6ff"
-            isActive={this.state.isHD}
-            onClick={() => {
-              this.setState({
-                isHD: !this.state.isHD,
-              });
-            }}
-          >
-            <MdHighQuality />
-          </StyledIcon>
           <EditorContext.Consumer>
             {([state, setState]) => (
               <StyledIcon
@@ -327,6 +346,7 @@ export class Toolbar extends React.Component<Props, State> {
               </StyledIcon>
             )}
           </GLContext.Consumer>
+          <FPS />
         </Panel>
       </React.Fragment>
     );

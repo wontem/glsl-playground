@@ -21,6 +21,7 @@ export class OpGLRenderToTexture extends OpLifeCycle {
     this.addInTrigger('sendTexture', () => {
       this.sendOutPortValue('buffer', this.fb);
     });
+    this.addInPort('cycles', PortDataType.NUMBER, 1); // TODO: remove it because it should be implemented using seq
     this.addInPort('program', PortDataType.OBJECT, null);
     this.addInPort('width', PortDataType.NUMBER, DEFAULT_DIMENSIONS[0]);
     this.addInPort('height', PortDataType.NUMBER, DEFAULT_DIMENSIONS[1]);
@@ -48,12 +49,14 @@ export class OpGLRenderToTexture extends OpLifeCycle {
         return;
       }
 
-      this.fb.activate();
-      this.state.program.render(
-        this.fb.getResolution(),
-        this.fb.getCurrentFramebuffer(),
-      );
-      this.fb.swap();
+      for (let index = 0; index < this.state.cycles; index += 1) {
+        this.fb.activate();
+        this.state.program.render(
+          this.fb.getResolution(),
+          this.fb.getCurrentFramebuffer(),
+        );
+        this.fb.swap();
+      }
 
       this.sendOutPortValue('buffer', this.fb);
       this.triggerOut('next');

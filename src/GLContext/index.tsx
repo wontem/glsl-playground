@@ -16,6 +16,8 @@ export class GLState extends EventEmitter {
 
     if (gl) {
       this.gl = gl;
+      gl.getExtension('EXT_color_buffer_float');
+      gl.getExtension('OES_texture_float_linear');
     } else {
       throw 'Cannot get gl context';
     }

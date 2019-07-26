@@ -1,4 +1,4 @@
-import { setImmediate } from 'core-js/web/immediate';
+import { clearImmediate, setImmediate } from 'core-js/web/immediate';
 import { action, observable } from 'mobx';
 import { PortType } from '../constants';
 import { OpNodeStore } from '../stores/OpNodeStore';
@@ -144,8 +144,18 @@ export abstract class OpLifeCycle {
     this.addPort(PortType.OUTPUT, PortDataType.TRIGGER, name, label);
   }
 
+  // private removePort(type: PortType, name: string): void {
+  //   const Port = this.getPortByName(type, name);
+  //   this.node.addPort(port);
+
+  //   this.portIds[type][name] = port;
+  //   this.portNames.set(port, name);
+  // }
+
   // FIXME: implement it
-  protected removeIn(name: string): void {}
+  protected removeIn(name: string): void {
+    // this.removePort(PortType.INPUT, name);
+  }
 
   // FIXME: implement it
   protected removeOut(name: string): void {}
@@ -225,7 +235,6 @@ export abstract class OpLifeCycle {
     }
   }
 
-  @action
   private performUpdate = action(() => {
     if (this.isDirty || !this.initialized) {
       const prevState = this.state;
@@ -241,6 +250,7 @@ export abstract class OpLifeCycle {
     }
 
     this.triggersCallOrder.forEach((name) => {
+      // console.debug(`${this.name}: out trigger: ${name}`);
       const trigger: Trigger = this.state[name];
       trigger();
     });
@@ -251,6 +261,9 @@ export abstract class OpLifeCycle {
   });
 
   destroy(): void {
+    if (typeof this.updateTimer !== 'undefined') {
+      clearImmediate(this.updateTimer);
+    }
     this.opWillBeDestroyed && this.opWillBeDestroyed();
   }
 
