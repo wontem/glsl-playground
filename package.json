@@ -30,7 +30,7 @@
     "@types/redux-actions": "^2.6.0",
     "@types/styled-components": "^4.1.16",
     "@types/uuid": "^3.4.4",
-    "@types/webgl2": "^0.0.4",
+    "@types/webgl2": "^0.0.5",
     "awesome-typescript-loader": "^5.2.1",
     "babel-loader": "^8.0.5",
     "css-loader": "^2.1.1",
@@ -47,7 +47,8 @@
     "webpack": "^4.30.0",
     "webpack-cli": "^3.3.1",
     "webpack-dev-server": "^3.3.1",
-    "webpack-notifier": "^1.6.0"
+    "webpack-notifier": "^1.6.0",
+    "worker-plugin": "^3.1.0"
   },
   "dependencies": {
     "@hot-loader/react-dom": "^16.8.6",

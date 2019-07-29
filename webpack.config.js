@@ -5,6 +5,8 @@ const path = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 // const WebpackNotifierPlugin = require('webpack-notifier');
 const MonacoWebpackPlugin = require("monaco-editor-webpack-plugin");
+const WorkerPlugin = require("worker-plugin");
+
 // const ForkTsCheckerWebpackPlugin = require("fork-ts-checker-webpack-plugin");
 
 // const styledComponentsTransformer = createStyledComponentsTransformer();
@@ -62,7 +64,7 @@ module.exports = {
         }
       },
       {
-        test: /\.glsl$/,
+        test: /\.(glsl|json)$/,
         loader: "raw-loader"
       },
       {
@@ -109,7 +111,8 @@ module.exports = {
     // }),
     new MonacoWebpackPlugin({
       languages: []
-    })
+    }),
+    new WorkerPlugin()
     // new CheckerPlugin(),
     // new webpack.HotModuleReplacementPlugin(), // enable HMR globally
     // new webpack.NamedModulesPlugin() // prints more readable module names in the browser console on HMR updates

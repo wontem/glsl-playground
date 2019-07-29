@@ -46,7 +46,7 @@ function createShader(
   if (errors) {
     errors.push({
       type: ViewEventType.CREATE_SHADER,
-      message: gl.getShaderInfoLog(shader),
+      message: gl.getShaderInfoLog(shader)!,
     });
   }
 
@@ -79,7 +79,7 @@ function createProgram(
   if (errors) {
     errors.push({
       type: ViewEventType.CREATE_PROGRAM,
-      message: gl.getProgramInfoLog(program),
+      message: gl.getProgramInfoLog(program)!,
     });
   }
 

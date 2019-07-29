@@ -13,15 +13,15 @@
     // "noImplicitReturns": true,
     // "noImplicitThis": true,
     // "noUnusedLocals": true,
-    "isolatedModules": true,
+    // "isolatedModules": true,
     "forceConsistentCasingInFileNames": true,
     "module": "esnext",
     "moduleResolution": "node",
-    "jsx": "react",
-    // "resolveJsonModule": true,
+    // "jsx": "react",
     "lib": [
       "esnext",
-      "dom"
+      "webworker"
+      // "dom"
       // "dom.iterable"
     ]
   }

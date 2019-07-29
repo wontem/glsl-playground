@@ -1,0 +1,77 @@
+{
+  "name": "eclipse",
+  "nodes": [
+    {
+      "id": "0997efff-4a08-44a7-abaf-de2ed2c61467",
+      "op": {
+        "type": "AnimationLoop",
+        "state": {
+          "isActive": true
+        }
+      }
+    },
+    {
+      "id": "e14dbd24-f2b0-43fb-9d3f-92785b89fb76",
+      "op": {
+        "type": "GLRenderToMain",
+        "state": {}
+      }
+    },
+    {
+      "id": "0c986d8d-3165-4a49-823b-48453eebb6ca",
+      "op": {
+        "type": "GLProgram",
+        "state": {
+          "vert": "#version 300 es\nprecision mediump float;\n\nin vec2 a_position;\nout vec2 v_texcoord;\n\nvoid main() {\n  gl_Position = vec4(a_position, 0., 1.);\n  v_texcoord = (a_position + 1.) / 2.;\n}\n",
+          "frag": "#version 300 es\nprecision highp float;\n\nout vec4 frag_color;\n//uniform vec2 channel0_resolution;\nuniform float time;\nuniform sampler2D channel1;\nuniform float width;\nuniform float height;\nuniform float n;\n\n#define ADD 4\n\nfloat rand(vec2 n) { \n\treturn fract(sin(dot(n, vec2(12.9898, 4.1414))) * 43758.5453);\n}\n\nfloat noise(vec2 p){\n\tvec2 ip = floor(p);\n\tvec2 u = fract(p);\n\tu = u*u*(3.0-2.0*u);\n\t\n\tfloat res = mix(\n\t\tmix(rand(ip),rand(ip+vec2(1.0,0.0)),u.x),\n\t\tmix(rand(ip+vec2(0.0,1.0)),rand(ip+vec2(1.0,1.0)),u.x),u.y);\n\treturn res*res;\n}\n\n\n\nvec2 cmpxcjg(in vec2 c) {\n\treturn vec2(c.x, -c.y);\n}\n\nvec2 cmpxmul(in vec2 a, in vec2 b) {\n\treturn vec2(a.x * b.x - a.y * b.y, a.y * b.x + a.x * b.y);\n}\n\nvec2 cmpxpow(in vec2 c, int p) {\n    vec2 t = vec2(1., 0.);\n\n\tfor (int i = 0; i < p; ++i) {\n\t\tt = cmpxmul(t, c);\n\t}\n    return t;\n}\n\nvec2 cmpxdiv(in vec2 a, in vec2 b) {\n    return cmpxmul(a, cmpxcjg(b));\n}\n\nfloat cmpxmag(in vec2 c) {\n    return sqrt(c.x * c.x + c.y * c.y);\n}\n\n\n#define PI 3.141592653589793\n\nvec3 hsv2rgb(vec3 c) {\n  vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);\n  vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);\n  return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);\n}\n\n\nvec3 col(vec2 uv)\n{\n    //float n = atan(uv.y, uv.x) / PI;\n    //uv = clamp(uv, 0.1, .50);\n    //uv = fract(uv);\n    //uv.x = mod(uv.x / 4., 1./8.) * 12. - u_mouse_end.x;\n\n    //return texture(channel1, vec2(uv.x, 0.05), -10.).xyz;\n\n    //return texture(channel1, vec2(uv.x, 0.15)).xyz;\n\n    vec3 col = hsv2rgb(vec3(uv.x - .55, .2, pow(uv.x, 1.)));\n\n    //vec3 col = hsv2rgb(vec3(uv.x, 1., 1.));\n\n\n    return col;\n}\n\n\nvoid main() {\n    vec2 channel0_resolution = vec2(width, height);\n    vec2 st = gl_FragCoord.xy/channel0_resolution.xy;\n\n    float ratio = channel0_resolution.x/channel0_resolution.y;\n    st.x *= ratio;\n    float t = time / 400.;\n    //st /= 2.;\n    vec3 color = vec3(.0);\n\n    vec2 z = st;\n\n    vec2 tmp = vec2(1., 0.);\n\tfor (int i = 0; i < int(n); ++i) {\n        float i_f = float(i) / n;\n        vec2 a = vec2(1., 0.);// random2(vec2(i, t + 0.));\n        vec2 b = vec2(noise(vec2(i + 2000 * ADD, t + 10. + i_f)), noise(vec2(i + 1000 * ADD + 1000, t + 20. + i_f)));\n        vec2 c = vec2(1., 0.);// random2(vec2(i, t + 20.));\n        vec2 d = vec2(noise(vec2(i + 1000 * ADD, t + 30. + i_f)), noise(vec2(i + 1000 * ADD + 1000, t + 40. + i_f)));\n\n        vec2 v = cmpxdiv(cmpxmul(z, a) - b, cmpxmul(z, c) - d);\n\t\ttmp = cmpxmul(tmp, v);\n\t}\n\n\n    z = tmp;\n    //z = cmpxmul(z, cmpxdiv(st - u_mouse_start, st - u_mouse_end));\n\n    //z += cmpxdiv(z - u_mouse_start, z - u_mouse_end);\n    //z += cmpxdiv(z - u_mouse_end, z);\n    //z = cmpxdiv(z + u_mouse_end, z + u_mouse_start);\n    //z = cmpxdiv(z, z + .2 * vec2(cos(time), sin(time)));\n    //z = cmpxmul(z + .07, z * vec2(cos(time), sin(time)));\n\n    vec2 rad = vec2(\n        fract(atan(z.y, z.x) / PI / 2.),\n        length(z)\n    );\n\n    color = col(rad);\n\n    // Draw the min distance (distance field)\n    //color += m_dist;\n\n    // Draw cell center\n    //color += 1.-step(.05, m_dist);\n\n    // Draw grid\n    //color += step(.98, f_st.x) + step(.98, f_st.y);\n\n    // Show isolines\n    // color -= step(.7,abs(sin(27.0*m_dist)))*.5;\n\n    frag_color = vec4(color, 1.0);\n}\n\n/*\nfrag_color = col(z);\nreturn;\n\nvec2 rad = vec2(\n    fract(atan(z.y, z.x) / PI / 2.),\n    length(z)\n);\n\nfrag_color = col(rad);\n*/",
+          "width": 1200,
+          "time": 1134,
+          "height": 1200,
+          "n": 3
+        }
+      }
+    },
+    {
+      "id": "853d5317-4354-45bc-9f9e-eb6d26276bee",
+      "op": {
+        "type": "Counter",
+        "state": {
+          "count": 1134
+        }
+      }
+    },
+    {
+      "id": "0f14cad6-bcd6-4b14-89e7-7bb5418a4e66",
+      "op": {
+        "type": "GLCanvasSize",
+        "state": {}
+      }
+    }
+  ],
+  "links": [
+    {
+      "output": ["0997efff-4a08-44a7-abaf-de2ed2c61467", "tick"],
+      "input": ["853d5317-4354-45bc-9f9e-eb6d26276bee", "increment"]
+    },
+    {
+      "output": ["0c986d8d-3165-4a49-823b-48453eebb6ca", "program"],
+      "input": ["e14dbd24-f2b0-43fb-9d3f-92785b89fb76", "program"]
+    },
+    {
+      "output": ["0997efff-4a08-44a7-abaf-de2ed2c61467", "tick"],
+      "input": ["e14dbd24-f2b0-43fb-9d3f-92785b89fb76", "render"]
+    },
+    {
+      "output": ["853d5317-4354-45bc-9f9e-eb6d26276bee", "count"],
+      "input": ["0c986d8d-3165-4a49-823b-48453eebb6ca", "time"]
+    },
+    {
+      "output": ["0f14cad6-bcd6-4b14-89e7-7bb5418a4e66", "width"],
+      "input": ["0c986d8d-3165-4a49-823b-48453eebb6ca", "width"]
+    },
+    {
+      "output": ["0f14cad6-bcd6-4b14-89e7-7bb5418a4e66", "height"],
+      "input": ["0c986d8d-3165-4a49-823b-48453eebb6ca", "height"]
+    }
+  ]
+}

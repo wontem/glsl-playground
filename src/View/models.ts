@@ -1,11 +1,11 @@
 export enum ViewEventType {
-  CREATE_SHADER,
-  CREATE_PROGRAM,
+  CREATE_SHADER = 'createShader',
+  CREATE_PROGRAM = 'createProgram',
 }
 
 export interface ViewEvent {
   type: ViewEventType;
-  message: string | null;
+  message: string;
 }
 
 export type UniformValues = Record<string, number[]>;

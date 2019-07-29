@@ -227,12 +227,7 @@ export class Texture implements ReadonlyTexture {
   }
 
   public setSource(
-    source:
-      | ImageBitmap
-      | ImageData
-      | HTMLImageElement
-      | HTMLCanvasElement
-      | HTMLVideoElement,
+    source: ImageBitmap | ImageData,
     resolution: Resolution = [source.width, source.height],
     flipY: boolean = true,
     filter: Filter = this.filter,
