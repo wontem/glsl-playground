@@ -46,6 +46,7 @@ export class GLProgram extends GL {
         return;
       }
 
+      // TODO: use unique names
       this.uniformsMap.set(name, info);
 
       switch (type) {

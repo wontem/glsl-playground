@@ -1,4 +1,3 @@
-import { clearImmediate, setImmediate } from 'core-js/web/immediate';
 import { Graph } from '../Graph';
 import { ParamAddress, ParamDataCollection } from '../Graph/types';
 import { GLStateContext } from './contexts';
@@ -6,11 +5,10 @@ import { GLState } from './modules/GLState';
 import { Looper } from './modules/Looper';
 import { OperatorCreators } from './OperatorCreators';
 import { OperatorType } from './OperatorCreators/types';
-import testData from './testData.json';
 import { IncomingMessage, IncomingMessageType } from './types';
 
 const graph = new Graph();
-const looper = new Looper((cb) => setImmediate(cb), clearImmediate);
+const looper = new Looper((cb) => setImmediate(cb), (id) => clearImmediate(id));
 
 looper.on('tick', () => graph.tick());
 
@@ -21,8 +19,6 @@ addEventListener('message', (e) => {
   switch (data.type) {
     case IncomingMessageType.INIT: {
       GLStateContext.set(new GLState(data.payload));
-      // TODO: only for test
-      useProject(graph, JSON.parse(testData) as ProjectData);
       break;
     }
     case IncomingMessageType.CLEAR: {
@@ -97,6 +93,9 @@ function setNodeParameters(
 
 function useProject(graph: Graph, project: ProjectData): void {
   console.log(project);
+  looper.stop();
+
+  graph.reset();
 
   project.nodes.forEach(({ op: { type, state }, id }) => {
     createNode(graph, type, id);

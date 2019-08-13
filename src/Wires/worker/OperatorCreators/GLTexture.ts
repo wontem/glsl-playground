@@ -1,7 +1,5 @@
-// import { bitmapLoader } from '../../Editor/utils/bitmapLoader';
-
-import { Filter, Wrap } from '../../../View/models';
 import { Texture } from '../../../View/Texture';
+import { Filter, Wrap } from '../../../View/types';
 import { GL } from './GL';
 
 const DEFAULT_DIMENSIONS: [number, number] = [1, 1];

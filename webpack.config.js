@@ -15,12 +15,7 @@ module.exports = {
   context: path.resolve(__dirname, "./src"),
   mode: "development",
   devtool: "inline-source-map",
-  entry: [
-    "react-hot-loader/patch",
-    // 'webpack-dev-server/client?http://localhost:8080',// bundle the client for webpack-dev-server and connect to the provided endpoint
-    // 'webpack/hot/only-dev-server', // bundle the client for hot reloading, only- means to only hot reload for successful updates
-    "./Editor/index.tsx"
-  ],
+  entry: ["./Editor/index.tsx"],
   devServer: {
     hot: true
   },
@@ -43,8 +38,8 @@ module.exports = {
             "@babel/plugin-transform-runtime",
             ["@babel/plugin-proposal-decorators", { legacy: true }],
             ["@babel/plugin-proposal-class-properties", { loose: true }],
-            "@babel/proposal-object-rest-spread",
-            "react-hot-loader/babel"
+            "@babel/proposal-object-rest-spread"
+            // "react-hot-loader/babel"
           ],
           presets: [
             [
@@ -93,10 +88,7 @@ module.exports = {
     ]
   },
   resolve: {
-    extensions: [".tsx", ".ts", ".js"],
-    alias: {
-      "react-dom": "@hot-loader/react-dom"
-    }
+    extensions: [".tsx", ".ts", ".js"]
   },
   output: {
     filename: "main.js",

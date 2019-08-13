@@ -1,5 +1,5 @@
 import { action, observable } from 'mobx';
-import * as uuid from 'uuid/v4';
+import uuid from 'uuid/v4';
 import { PortType } from '../constants';
 import { GraphStore } from './GraphStore';
 import { PortStore } from './PortStore';

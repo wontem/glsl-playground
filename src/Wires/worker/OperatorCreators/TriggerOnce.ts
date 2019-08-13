@@ -26,7 +26,7 @@ export class TriggerOnce extends Node {
 
   private updateIsTriggered(isTriggered: boolean): void {
     if (this.state.isTriggered !== isTriggered) {
-      this.commitChanges({
+      this.setState({
         isTriggered,
       });
     }

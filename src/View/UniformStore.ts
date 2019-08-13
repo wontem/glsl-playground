@@ -1,4 +1,4 @@
-import { UniformInfo } from './models';
+import { UniformInfo } from './types';
 
 // https://github.com/mrdoob/three.js/blob/640f046fc6f3918778e9dfb59fcc9ab3fac9cb05/src/renderers/webgl/WebGLUniforms.js
 function useUniform(

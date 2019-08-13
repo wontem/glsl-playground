@@ -1,6 +1,6 @@
 import { PingPongFramebuffer } from '../../../View/Framebuffer';
-import { Filter, Wrap } from '../../../View/models';
 import { Program } from '../../../View/Program';
+import { Filter, Wrap } from '../../../View/types';
 import { GL } from './GL';
 
 const DEFAULT_DIMENSIONS: [number, number] = [1, 1];

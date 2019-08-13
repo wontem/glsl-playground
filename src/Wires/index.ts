@@ -1,3 +1,4 @@
+import { ParamAddress } from './Graph/types';
 import { OperatorType } from './worker/OperatorCreators/types';
 import { IncomingMessage, IncomingMessageType } from './worker/types';
 
@@ -42,6 +43,16 @@ export class Wires {
     });
   }
 
+  createLink(output: ParamAddress, input: ParamAddress): void {
+    this.worker.postMessage({
+      type: IncomingMessageType.CREATE_LINK,
+      payload: {
+        output,
+        input,
+      },
+    });
+  }
+
   useProject(projectFile: ArrayBuffer): void {
     this.worker.postMessage(
       {
@@ -50,6 +61,10 @@ export class Wires {
       },
       [projectFile],
     );
+  }
+
+  terminate(): void {
+    this.worker.terminate();
   }
 }
 

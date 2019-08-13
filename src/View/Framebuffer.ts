@@ -1,5 +1,5 @@
-import { Filter, ReadonlyTexture, Resolution, Wrap } from './models';
 import { Texture, TextureType } from './Texture';
+import { Filter, ReadonlyTexture, Resolution, Wrap } from './types';
 
 class Framebuffer {
   private fbo: WebGLFramebuffer;

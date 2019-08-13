@@ -16,14 +16,9 @@ export class Graph {
   private nodes: Record<string, Node> = {};
   private links: Links = new Links();
   private dirtyTriggers: Links = new Links();
-  private newStates: Record<string, ParamDataCollection> = {};
 
   addToNodeState(nodeId: string, newState: ParamDataCollection): void {
-    if (nodeId in this.newStates) {
-      this.newStates[nodeId] = { ...this.newStates[nodeId], ...newState };
-    } else {
-      this.newStates[nodeId] = newState;
-    }
+    this.nodes[nodeId].setState(newState);
   }
 
   private onTrigger = (from: ParamAddress): void => {
@@ -44,6 +39,7 @@ export class Graph {
     node.on(Event.TRIGGER, this.onTrigger);
     node.on(Event.OUTPUT_REMOVED, this.onOutputDelete);
     node.on(Event.PARAMETER_REMOVED, this.onParameterDelete);
+    // node.on(Event.STATE_DID_CHANGE, this.onStateDidChange);
 
     // TODO: add other triggers
 
@@ -111,19 +107,9 @@ export class Graph {
   }
 
   private commitChanges(): void {
-    const newStates = this.newStates;
-    this.newStates = {};
-
-    for (const nodeId in newStates) {
-      const diff = newStates[nodeId];
-      if (nodeId in this.nodes) {
-        const node = this.nodes[nodeId];
-        const prevState = node.state;
-        const newState = { ...prevState, ...diff };
-        node.nodeWillUpdate && node.nodeWillUpdate(newState);
-        node.commitChanges(newState);
-        node.nodeDidUpdate && node.nodeDidUpdate(prevState);
-      }
+    for (const nodeId in this.nodes) {
+      const node = this.nodes[nodeId];
+      node.commitChanges();
     }
   }
 
@@ -149,7 +135,6 @@ export class Graph {
 
   reset(): void {
     this.dirtyTriggers.clear();
-    this.newStates = {};
     this.links.clear();
     this.nodes = {};
   }

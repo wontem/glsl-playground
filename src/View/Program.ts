@@ -1,5 +1,5 @@
 import * as defaultShaders from './defaultShaders';
-import { Attribute, Resolution, ViewEvent, ViewEventType } from './models';
+import { Attribute, Resolution, ViewEvent, ViewEventType } from './types';
 import { UniformState } from './UniformStore';
 import { getGLSLVersion } from './utils/getGLSLVersion';
 

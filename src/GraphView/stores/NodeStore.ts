@@ -1,5 +1,5 @@
 import { action, computed, observable } from 'mobx';
-import * as uuid from 'uuid/v4';
+import uuid from 'uuid/v4';
 import {
   NODE_HEIGHT,
   NODE_MIN_WIDTH,

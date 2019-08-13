@@ -37,11 +37,11 @@ export interface Node<C extends Record<string, any> = any> {
   constructor: NodeConstructor<C>;
 
   id: string;
-
   state: ParamDataCollection;
 
   trigger(name: string): void;
-  commitChanges(newState: ParamDataCollection): void;
+  setState(newState: ParamDataCollection): void;
+  commitChanges(): void;
   getOutputValue(name: string): ParamData;
 
   on(eventName: Event.TRIGGER, callback: (address: ParamAddress) => void): this;
@@ -105,6 +105,7 @@ export class Node<C = any> extends EventEmitter {
 
   id: string;
   state: ParamDataCollection = {};
+  private newState: ParamDataCollection | null = null;
 
   private outputState: ParamDataCollection = {};
   private triggers: TriggersCollection = {};
@@ -126,6 +127,30 @@ export class Node<C = any> extends EventEmitter {
       }
     },
   }) as Partial<C>;
+
+  get isDirty(): boolean {
+    return this.newState !== null;
+  }
+
+  setState(newState: ParamDataCollection): void {
+    this.newState = { ...this.newState, ...newState };
+  }
+
+  commitChanges(): void {
+    if (this.isDirty) {
+      const prevState: ParamDataCollection = this.state;
+      const newState = { ...prevState, ...this.newState };
+
+      this.nodeWillUpdate && this.nodeWillUpdate(newState);
+
+      this.state = newState;
+      this.newState = null;
+
+      // this.emit(Event.STATE_DID_CHANGE, this.state);
+
+      this.nodeDidUpdate && this.nodeDidUpdate(prevState);
+    }
+  }
 
   getOutputValue(name: string): ParamData {
     return this.outputState[name];
@@ -173,17 +198,6 @@ export class Node<C = any> extends EventEmitter {
 
   trigger(name: string): void {
     this.triggers[name]();
-  }
-
-  commitChanges(newState: ParamDataCollection): void {
-    const prevState = this.state;
-    this.state = {};
-
-    for (const prop in prevState) {
-      this.state[prop] = newState[prop];
-    }
-
-    this.emit(Event.STATE_DID_CHANGE, this.state);
   }
 
   addTrigger(name: string, callback: () => void): void {
@@ -244,6 +258,9 @@ export class Node<C = any> extends EventEmitter {
   removeParameter(name: string): void {
     if (name in this.state) {
       delete this.state[name];
+      if (this.isDirty) {
+        delete this.newState![name];
+      }
       this.emitInterfaceEvent(name, Event.PARAMETER_REMOVED);
     } else if (name in this.triggers) {
       delete this.triggers[name];

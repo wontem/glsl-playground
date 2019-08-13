@@ -1,4 +1,4 @@
-import { Filter, ReadonlyTexture, Resolution, Wrap } from './models';
+import { Filter, ReadonlyTexture, Resolution, Wrap } from './types';
 
 function getAppropriateWrap(gl: WebGL2RenderingContext, wrap: Wrap): number {
   switch (wrap) {

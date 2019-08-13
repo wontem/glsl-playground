@@ -16,19 +16,19 @@ export class Counter extends Node {
     this.addTrigger('reset', () => {
       // TODO: maybe it's better to do that in this.stateDidChange
       const count = 0;
-      this.commitChanges({ count });
+      this.setState({ count });
       this.sendOut('count', count);
     });
 
     this.addTrigger('increment', () => {
       const count = this.state.count + 1;
-      this.commitChanges({ count });
+      this.setState({ count });
       this.sendOut('count', count);
     });
 
     this.addTrigger('decrement', () => {
       const count = this.state.count - 1;
-      this.commitChanges({ count });
+      this.setState({ count });
       this.sendOut('count', count);
     });
   }

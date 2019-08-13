@@ -18,7 +18,7 @@ export interface AnimationLoop extends Node {
 export class AnimationLoop extends Node {
   private loop = new Looper(
     (cb: (time: number) => void) => requestAnimationFrame(cb),
-    cancelAnimationFrame,
+    (id: number) => cancelAnimationFrame(id),
   );
 
   constructor(id: string) {
